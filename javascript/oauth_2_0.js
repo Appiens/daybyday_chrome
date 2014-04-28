@@ -20,6 +20,11 @@ function OAuth2(redirect_uri, client_id, client_secret, scope) {
     this.tabIdAutorizeWin = 0;
     // авторизация в процессе
     this.isAutorizing = false;
+    // сохранённый запрос на исполнение
+    this.savedRequest = null;
+    // тело сохранённого запроса
+    this.savedRequestBody = null;
+
     // token for getting data
     var token = null;
     // token expiration time (in seconds)
@@ -29,7 +34,6 @@ function OAuth2(redirect_uri, client_id, client_secret, scope) {
     // запрос авторизации для получения кода
     //this.authRequest = "https://accounts.google.com/o/oauth2/auth?redirect_uri=" + this.redirect_uri + "&response_type=code&client_id=" + this.client_id + "&scope=" + this.scope + /*"&approval_prompt=force + */"&access_type=offline";
     this.authRequest = "https://accounts.google.com/o/oauth2/auth?redirect_uri=" + this.redirect_uri + "&response_type=token&client_id=" + this.client_id + "&scope=" + this.scope /*+ "&approval_prompt=force&access_type=offline"*/;
-
     // для обращения к переменным класса из обработчиков событий
     var parent = this;
 
@@ -70,6 +74,39 @@ function OAuth2(redirect_uri, client_id, client_secret, scope) {
         }
     }
 
+    // forse - форсировать авторизацию
+    this.authorize = function(forse) {
+        if (parent.isAutorizing){
+            return;
+        }
+
+        if (parent.isTokenOk() && !forse)
+        {
+            // we are authorized already we should rise authorization event
+            window.dispatchEvent(parent.authorizeEvent);
+            return;
+        }
+
+        chrome.windows.create({'url': this.authRequest, 'type': 'panel', 'focused' : true, 'width' : 450, 'height' : 550}, this.onWinAuthCreated
+        );
+    };
+
+    this.onAutorized = function() {
+        if (parent.savedRequest != null)
+        {
+            // sending saved request
+            parent.savedRequest.setRequestHeader('Authorization', 'Bearer ' + parent.token );
+            parent.savedRequest.send(parent.savedRequestBody);
+
+            setTimeout(parent.resetRequest, 2000);
+        }
+    }
+
+    this.resetRequest = function () {
+        parent.savedRequest = null;
+        parent.savedRequestBody = null;
+    }
+
     this.authorizeEvent = new CustomEvent("Authorize");
 };
 
@@ -84,27 +121,28 @@ OAuth2.prototype.initBackgroundPage = function() {
     chrome.tabs.onRemoved.addListener(function (tabId) {
         callback2(tabId);
     });
+
+    window.addEventListener('Authorize', this.onAutorized, false)
 }
-
-// forse - форсировать авторизацию
-OAuth2.prototype.authorize = function(forse) {
-    if (this.isAutorizing){
-        return;
-    }
-
-    if (this.isTokenOk() && !forse)
-    {
-        // we are authorized already we should rise authorization event
-        window.dispatchEvent(parent.authorizeEvent);
-        return;
-    }
-
-    chrome.windows.create({'url': this.authRequest, 'type': 'panel', 'focused' : true, 'width' : 450, 'height' : 550}, this.onWinAuthCreated
-    );
-};
 
 OAuth2.prototype.isTokenOk = function() {
     return this.token != null && ((getCurrentTime() - this.tokenGetTime) * 0.001 < this.tokenExpiresIn);
+}
+/*
+    request - HttpRequest
+    body - body of a query
+*/
+OAuth2.prototype.setSignedRequest = function(request, body) {
+    if (this.savedRequest != null)
+    {
+        return;
+    }
+
+    // saving request
+    this.savedRequest = request;
+    this.savedRequestBody = body;
+
+    this.authorize(false);
 }
 
 function parseValue(sourceStr, begStr, endStr)

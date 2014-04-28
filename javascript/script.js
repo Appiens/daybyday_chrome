@@ -43,12 +43,18 @@
   
   function OnDOMContentLoaded() 
   {
-      document.getElementById('email_addr_repeat').addEventListener('input', check);
+      //Get Reference to Functions
+      var backGround = chrome.extension.getBackgroundPage();
+      //Call Function
+      backGround.AskForTasks();
+      chrome.runtime.onMessage.addListener(OnTasksReady);
+
+    //  document.getElementById('email_addr_repeat').addEventListener('input', check);
       document.getElementById('form').addEventListener('input', inputHandler);
       document.getElementById('button').addEventListener('click', clickHandler);
-	  requestData();
+	//  requestData();
   }
-  
+
   function requestData()
   {
       chrome.runtime.sendMessage({greeting: "giveMeData"}, function(response)	  
@@ -58,6 +64,24 @@
         document.getElementById('email_addr').value = response.emailAddr;
 	  }
 	);
+  }
+
+  function OnTasksReady(request, sender, sendResponse)
+  {
+      if (request.greeting == "giveMeData")
+      {
+          var x = document.getElementById("email_addr");
+          var backGround = chrome.extension.getBackgroundPage();
+          //Call Function
+          var taskLists = backGround.taskLists;
+
+          for (var i = 0, cal; cal = taskLists[i]; i++)
+          {
+              var option = document.createElement("option");
+              option.text = cal.title;
+              x.add(option,x[0]);
+          }
+      }
   }
 
 	
