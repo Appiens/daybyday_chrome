@@ -1,0 +1,25 @@
+{
+    "name": "__MSG_name__",
+    "description": "__MSG_description__",
+    "default_locale":"en",
+    "version": "1.2.2",
+    "background": {
+        "page": "views/background.html"
+    },
+    "permissions": [
+        "tabs", "http://*.google.com/", "https://*.google.com/", "https://www.example.com/oauth2callback",
+        "http://www.google.com/m8/feeds/*",
+        "https://www.google.com/accounts/OAuthGetRequestToken",
+        "https://www.google.com/accounts/OAuthAuthorizeToken",
+        "https://www.google.com/accounts/OAuthGetAccessToken"
+    ],
+    "browser_action": {
+        "default_title": "__MSG_title__"
+    },
+    "icons": {
+        "128": "images/icon-128.gif",
+        "16":"images/icon-16.gif"
+    },
+
+    "manifest_version": 2
+}
