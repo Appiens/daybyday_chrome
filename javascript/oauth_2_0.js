@@ -87,7 +87,7 @@ function OAuth2(redirect_uri, client_id, client_secret, scope) {
             return;
         }
 
-        chrome.windows.create({'url': this.authRequest, 'type': 'panel', 'focused' : true, 'width' : 450, 'height' : 550}, this.onWinAuthCreated
+        chrome.windows.create({'url': this.authRequest, 'type': 'panel', 'width' : 450, 'height' : 550}, this.onWinAuthCreated
         );
     };
 
@@ -127,6 +127,10 @@ OAuth2.prototype.initBackgroundPage = function() {
 
 OAuth2.prototype.isTokenOk = function() {
     return this.token != null && ((getCurrentTime() - this.tokenGetTime) * 0.001 < this.tokenExpiresIn);
+}
+
+OAuth2.prototype.allowRequest = function () {
+    return this.savedRequest == null;
 }
 /*
     request - HttpRequest

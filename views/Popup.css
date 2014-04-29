@@ -1,0 +1,201 @@
+.notebook > *, .notebook > * > * {
+    margin: 0;
+    padding: 0;
+}
+.notebook > .tabs, .notebook > .pages {
+    list-style: none;
+    overflow: hidden;
+}
+.notebook > .tabs a {
+    float: left;
+}
+
+/*  every tab has left and top border */
+.notebook > .tabs > li > * {
+    border-left: 1px gray solid;
+    border-top: 1px gray solid;
+}
+
+/*last tab has right border too*/
+.notebook > .tabs > li:last-child > * {
+    border-right: 1px gray solid;
+}
+/* the border color of every page*/
+.notebook > .pages {
+    border: 1px gray solid;
+}
+
+/* the attributes of a tab - font, size, height*/
+.notebook > .tabs {
+    font-family: Georgia;
+    font-size: 12px;
+    line-height: 30px;
+    height: 30px;
+}
+
+.notebook > .tabs a {
+    background:  #eee; /* background color of a tab */
+    padding: 0 10px;
+    text-decoration: none;
+    height: 30px;
+}
+
+.notebook > .tabs a:hover {
+    background:  #ddd; /* background color of a tab when the mouse is over it*/
+}
+
+
+/*#notebook1 > .pages, #notebook1 > .pages > li {
+    width: 320px;
+    height: 400px;
+}*/
+
+/*#notebook1 > .pages {
+    text-align: center;
+    line-height: 200px;
+    font-size: 150px;
+}*/
+
+/*#tab1-1 { background: #d81; }
+#tab1-2 { background: #8d1; }
+#tab1-3 { background: #1d8; }
+#tab1-4 { background: #18d; }
+#tab1-5 { background: #81d; }
+
+
+#notebook2 > .pages, #notebook2 > .pages > li {
+    width: 320px;
+    height: 320px;
+}
+
+
+#notebook3 > .pages, #notebook3 > .pages > li {
+    width: 300px;
+    height: 250px;
+}
+
+#notebook3, #tab2-1 > img, #tab2-2 > img {
+    padding: 5px;
+}*/
+
+
+.notebook > .pages > li > .page-top-border
+{
+    margin: 0px;
+    padding: 0px;
+    border: none;
+}
+
+.notebook > .pages > li > .page-top-border > p
+{
+    height: 1px;
+    background: gray;
+    float: left;
+    margin: 0px;
+    padding: 0px;
+    border: none;
+}
+
+.notebook > .pages > :nth-child(1) > .page-top-border> :nth-child(1),
+.notebook > .pages > :nth-child(2) > .page-top-border> :nth-child(2),
+.notebook > .pages > :nth-child(3) > .page-top-border> :nth-child(3),
+.notebook > .pages > :nth-child(4) > .page-top-border> :nth-child(4)
+{
+    background: inherit !important;
+}
+
+
+#notebook4 > .pages {
+    border-top: none;
+}
+
+/* this is the size of the page*/
+#notebook4 > .pages, #notebook4 > .pages > li {
+    width: 315px;
+    height: 400px;
+    box-sizing: border-box;
+}
+
+/* this is the size of one "p" (look at html code)*/
+#notebook4 > .tabs > li > a,
+#notebook4 > .pages > li > .page-top-border > p {
+    width: 105px;
+    box-sizing: border-box;
+}
+
+:invalid {
+    border-color: #e88;
+    -webkit-box-shadow: 0 0 5px rgba(255, 0, 0, .8);
+    -moz-box-shadow: 0 0 5px rbba(255, 0, 0, .8);
+    -o-box-shadow: 0 0 5px rbba(255, 0, 0, .8);
+    -ms-box-shadow: 0 0 5px rbba(255, 0, 0, .8);
+    box-shadow:0 0 5px rgba(255, 0, 0, .8);
+}
+
+:required {
+    border-color: #88a;
+    -webkit-box-shadow: 0 0 5px rgba(0, 0, 255, .5);
+    -moz-box-shadow: 0 0 5px rgba(0, 0, 255, .5);
+    -o-box-shadow: 0 0 5px rgba(0, 0, 255, .5);
+    -ms-box-shadow: 0 0 5px rgba(0, 0, 255, .5);
+    box-shadow: 0 0 5px rgba(0, 0, 255, .5);
+}
+
+/*form {
+    width:300px;
+    margin: 20px auto;
+}*/
+
+label {
+    margin-left: 5px;
+    display: block;
+  /*  text-align: center;*/
+}
+
+input {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    border:1px solid #ccc;
+    font-size:20px;
+    width:300px;
+    min-height:30px;
+    display:block;
+    margin-bottom:15px;
+    margin-top:5px;
+    margin-left: 5px;
+    outline: none;
+
+    -webkit-border-radius:5px;
+    -moz-border-radius:5px;
+    -o-border-radius:5px;
+    -ms-border-radius:5px;
+    border-radius:5px;
+}
+
+input[type=submit] {
+    background:#eee;
+    padding:10px;
+}
+
+#buttonaddtask:hover
+{  background:  #ddd;
+}
+
+.new-select-style-wpandyou select, textarea {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    border:1px solid #ccc;
+    font-size:20px;
+    width:300px;
+    min-height:35px;
+    display:block;
+    margin-bottom:15px;
+    margin-top:5px;
+    margin-left:5px;
+    outline: none;
+
+    -webkit-border-radius:5px;
+    -moz-border-radius:5px;
+    -o-border-radius:5px;
+    -ms-border-radius:5px;
+    border-radius:5px;
+}
+
