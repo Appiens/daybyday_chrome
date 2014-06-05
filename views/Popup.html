@@ -9,42 +9,205 @@
     <script src="../javascript/Popup.js"></script>
 </head>
 <body>
-<div class="notebook" id="notebook4">
-    <ul class="tabs">
-        <li><a href="#tab4-1" id="addTask"></a></li>
-        <li><a href="#tab4-2" id="addEvent"></a></li>
-        <li><a href="#tab4-3">Третья</a></li>
+<form id="form">
+    <!-- Сами вкладки -->
+    <ul id="Tabs">
+        <li id="auth" class="Tab"><a href="#Three" id="at">Authorize</a></li>
+        <li id="addTask" class="SelectedTab"><a href="#One" id="att">Add task</a></li>
+        <li id="addEvent" class="Tab"><a href="#Two" id="aet">Add event</a></li>
     </ul>
-    <ul class="pages">
-        <li id="tab4-1">
-            <div class="page-top-border"><p></p><p></p><p></p></div>
 
-            <label id="taskname"></label>
-            <input type="text" id="tasknameenter" name="tasknameenter" placeholder="Jane Doe" required>
-            <label id="tasklist"></label>
-            <div class="new-select-style-wpandyou">
-                <select name="tasklistenter" id="tasklistenter" required>
-                </select>
-            </div>
-            <label id="taskloading"></label>
-            <label id="taskdate"></label>
-            <input type="date" id="taskdateenter" name="taskdateenter" required>
-            <label id="taskcomment"></label>
-            <div class="new-select-style-wpandyou">
-            <textarea name="taskcommententer" id="taskcommententer"  rows="2" required></textarea>
-            </div>
-            <input type="submit" id="buttonaddtask" name="buttonaddtask"/>
-        </li>
-        <li id="tab4-2">
-            <div class="page-top-border"><p></p><p></p><p></p></div>
-            2
-        </li>
-        <li id="tab4-3">
-            <div class="page-top-border"><p></p><p></p><p></p></div>
-            3
-        </li>
-    </ul>
-</div>
+    <div style="text-align:center;vertical-align:middle;display:block;"><label id="taskloading"></label></div>
+
+    <!-- Содержимое вкладок -->
+    <div id="Content">
+        <!-- Первая -->
+        <div id="One">
+                    <label id="taskname"></label>
+                    <input  type="text" id="tasknameenter" name="tasknameenter" required />
+                    <label id="tasklist"></label>
+                    <div class="new-select-style-wpandyou">
+                        <select name="tasklistenter" id="tasklistenter" required />
+                        </select>
+                    </div>
+                    <label id="taskdate"></label>
+                    <input type="date" id="taskdateenter" name="taskdateenter" required />
+                    <label id="taskcomment"></label>
+                    <div class="new-select-style-wpandyou">
+                        <textarea name="taskcommententer" id="taskcommententer"  rows="2"></textarea>
+                     </div>
+                    <input type="button" id="buttonaddtask" name="buttonaddtask"/>
+        </div>
+
+        <!-- Вторая -->
+        <div id="Two">
+                    <label id="ename"></label>
+                    <div class="new-select-style-wpandyou">
+                        <input type="text" id="enameenter" name="enameenter" required>
+                    </div>
+                        <label id="edatestart"></label>
+                        <input type="datetime-local" id="edatestartenter" name="edatestartenter" required>
+                        <label id="edateend"></label>
+                        <input type="datetime-local" id="edateendenter" name="edateendenter" required>
+                    <table cellpadding=1 width=97%>
+                        <tr>
+                            <td style="width: 10%; text-align:center; vertical-align:top;">
+                                <div class="check-box-style">
+                                    <input type="checkbox" id="eallday" name="eallday" title="">
+                                </div>
+                            </td>
+                            <td style="width: 40%; text-align:left; vertical-align:top;">
+                                <label id="ealldaytext"></label>
+                            </td>
+                            <td style="width: 10%; text-align:center; vertical-align:top;">
+                                <div class="check-box-style">
+                                  <input type="checkbox" id="erepeatcheck" name="erepeatcheck" title="">
+                                </div>
+                            </td>
+                            <td style="width: 40%; text-align:left; vertical-align:top;">
+                                <label id="erpt"></label>
+                            </td>
+                        </tr>
+                    </table>
+                    <label id="erepeatinterval"></label>
+                    <div class="new-select-style-wpandyou">
+                         <select name="erepeatintervalenter" id="erepeatintervalenter">
+                         </select>
+                    </div>
+                    <label id="ecomment"></label>
+                    <div class="new-select-style-wpandyou">
+                        <textarea name="ecommententer" id="ecommententer"  rows="2"></textarea>
+                    </div>
+                    <label id="eplace"></label>
+                    <div class="new-select-style-wpandyou">
+                        <input type="text" id="eplaceenter" name="eplaceenter">
+                    </div>
+                    <label id="ecalendar"></label>
+                    <div class="new-select-style-wpandyou">
+                        <select name="ecalendarenter" id="ecalendarenter" required>
+                        </select>
+                    </div>
+
+                    <label id="eremind" style="display:none;"></label><br>
+                    <div id="Rem1" style="display:none;">
+                        <table cellpadding=1 width=97%>
+                            <tr>
+                                <td style="width: 60%; text-align:left;">
+                                    <label id="erem1label"></label>
+                                </td>
+                                <td style="width: 39%;">
+                                    <div class="new-select-style-reminder">
+                                        <select name="erem1combo" id="erem1combo">
+                                        </select>
+                                    </div>
+                                </td>
+                                <td style="text-align:center;">
+                                    <a href = "#" id="erem1close">
+                                        X
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="Rem2" style="display:none;">
+                        <table cellpadding=1 width=97%>
+                            <tr>
+                                <td style="width: 60%; text-align:left;">
+                                    <label id="erem2label"></label>
+                                </td>
+                                <td style="width: 39%;">
+                                    <div class="new-select-style-reminder">
+                                        <select name="erem2combo" id="erem2combo">
+                                        </select>
+                                    </div>
+                                </td>
+                                <td style="text-align:center;">
+                                    <a href = "#" id="erem2close">
+                                        X
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="Rem3" style="display:none;">
+                        <table cellpadding=1 width=97%>
+                            <tr>
+                                <td style="width: 60%; text-align:left;">
+                                    <label id="erem3label"></label>
+                                </td>
+                                <td style="width: 39%;">
+                                    <div class="new-select-style-reminder">
+                                        <select name="erem3combo" id="erem3combo">
+                                        </select>
+                                    </div>
+                                </td>
+                                <td style="text-align:center;">
+                                    <a href = "#" id="erem3close">
+                                        X
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="Rem4" style="display:none;">
+                        <table cellpadding=1 width=97%>
+                            <tr>
+                                <td style="width: 60%; text-align:left;">
+                                    <label id="erem4label"></label>
+                                </td>
+                                <td style="width: 39%;">
+                                    <div class="new-select-style-reminder">
+                                        <select name="erem4combo" id="erem4combo">
+                                        </select>
+                                    </div>
+                                </td>
+                                <td style="text-align:center;">
+                                    <a href = "#" id="erem4close">
+                                        X
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div id="Rem5" style="display:none;">
+                        <table cellpadding=1 width=97%>
+                            <tr>
+                                <td style="width: 60%; text-align:left;">
+                                    <label id="erem5label"></label>
+                                </td>
+                                <td style="width: 39%;">
+                                    <div class="new-select-style-reminder">
+                                        <select name="erem5combo" id="erem5combo">
+                                        </select>
+                                    </div>
+                                </td>
+                                <td style="text-align:center;">
+                                    <a href = "#" id="erem5close">
+                                        X
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <a href = "#" id="addRem">
+                     </a>
+
+                    <input type="button" id="buttonaddevent" name="buttonaddevent"/>
+        </div>
+
+        <div id="Three">
+            <div style="text-align:right"><label id="labelName">???</label>
+            <input type="button" id="buttonauth" name="buttonauth"/>
+            <input type="button" id="buttonrevoke" name="buttonrevoke"/>
+        </div>
+    </div>
+
+        <div style="text-align:right;vertical-align:bottom;">
+            <a href = "#" id="linkToCal">
+                Google Calendar
+            </a>
+        </div>
+</form>
 </body>
 </html>
 

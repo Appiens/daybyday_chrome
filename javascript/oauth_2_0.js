@@ -1,29 +1,18 @@
-/**
- * Created by AstafyevaLA on 28.04.2014.
- */
 
-/**
- * Created by AstafyevaLA on 25.04.2014.
- */
-
-// var AUTH_ = "https://accounts.google.com/o/oauth2/auth?redirect_uri=https%3A%2F%2Fwww.example.com%2Foauth2callback&response_type=code&client_id=492637198173-9isjidn1cm3cmt92n5rkmp8kfll8dgk4.apps.googleusercontent.com&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ftasks&approval_prompt=force&access_type=offline";
-
-
-function OAuth2(redirect_uri, client_id, client_secret, scope) {
+function OAuth2(redirect_uri, client_id, scope) {
     this.redirect_uri = redirect_uri;
-    // идентификатор клиента (Google developer console)
+    // the client id(Google developer console)
     this.client_id = client_id;
-    this.client_secret = client_secret;
-    // API на которые запрашиваются права
+    // API we want to use in our app
     this.scope = scope;
-    // идентификатор вкладки с авторизацией
-    this.tabIdAutorizeWin = 0;
-    // авторизация в процессе
+    // authorizing is in process
     this.isAutorizing = false;
-    // сохранённый запрос на исполнение
+    // saved request to proceed after authorize
     this.savedRequest = null;
-    // тело сохранённого запроса
+    // the body of saved request
     this.savedRequestBody = null;
+    // true means that authorization was cancelled by user
+    this.userCancelledAuthorize = false;
 
     // token for getting data
     var token = null;
@@ -31,112 +20,200 @@ function OAuth2(redirect_uri, client_id, client_secret, scope) {
     var tokenExpiresIn = 0;
     // the time we got last token
     var tokenGetTime = 0;
-    // запрос авторизации для получения кода
-    //this.authRequest = "https://accounts.google.com/o/oauth2/auth?redirect_uri=" + this.redirect_uri + "&response_type=code&client_id=" + this.client_id + "&scope=" + this.scope + /*"&approval_prompt=force + */"&access_type=offline";
-    this.authRequest = "https://accounts.google.com/o/oauth2/auth?redirect_uri=" + this.redirect_uri + "&response_type=token&client_id=" + this.client_id + "&scope=" + this.scope /*+ "&approval_prompt=force&access_type=offline"*/;
+
+    // state for auth request (unique for each starting plugin)
+    this.state = getRandomString(15);
+
+    // authorization request to get token
+    this.authRequest = "https://accounts.google.com/o/oauth2/auth?redirect_uri=" + this.redirect_uri  + "&response_type=token&client_id=" + this.client_id + "&scope=" + this.scope + "&state=" + this.state; /*&access_type=offline"*/;
+
     // для обращения к переменным класса из обработчиков событий
     var parent = this;
 
-    this.onWinAuthCreated = function (window) {
-        // Trace tab id which is created with this query
-        // запоминаем идентификатор вкладки с авторизацией, чтобы получить ответ от неё
-        parent.tabIdAutorizeWin = window.tabs[0].id;
-        parent.isAutorizing = true;
-    };
+    // authorization request with multiple accounts
+    this.authRequestWithSelectAccount = parent.authRequest + "&prompt=select_account";
 
-    this.onTabUpdate = function (tabId, changeInfo, tab) {
-        // Inject script into chosen tab after it is loaded completely
-        // здесь мы анализируем пришедший url из окна с авторизацией
-        if (tabId == parent.tabIdAutorizeWin && changeInfo.status == "complete") {
-            // Inject Jquery and in current tab
-            var url = tab.url;
-            // if (url.indexOf(parent.redirect_uri + '?') != -1) {
-            if (url.indexOf(parent.redirect_uri + '#') != -1) {
-                chrome.tabs.remove(tab.id);
-                parent.tabIdAutorizeWin = 0;
-                console.log(url)
-           //     parent.autorizeCode = parseValue(url, 'code=', '&');
-                https://www.example.com/oauth2callback#access_token=ya29.1.AADtN_VJRfqsVwK5…FRqJBK4B4LfCMKeUarr8G28y5hTLpBHIn2X9m7Ig&token_type=Bearer&expires_in=3600
-                parent.token = parseValue(url, 'access_token=', '&');;
-                parent.tokenExpiresIn = parseValue(url, 'expires_in=', '&');
-                parent.tokenGetTime = getCurrentTime()
-                parent.isAutorizing = false;
-                window.dispatchEvent(parent.authorizeEvent);
-            }
-        }
+    /*
+        make OAuth request
+        boolean force - force authorization even if token is ok,
+        boolean blindMode - if we need interaction with a user, authorization fails = do noe show windows
+        boolean useSelectAccount - check account
+    */
+    this.authorize = function(force, blindMode, useSelectAccount) {
+        parent.authorizeNew(force, blindMode, useSelectAccount);
     }
 
-    this.onTabRemoved = function (tabId) {
-        if (tabId == parent.tabIdAutorizeWin)
-        {
-            // cancelling authorirztion
-            parent.isAutorizing = false;
-        }
-    }
-
-    // forse - форсировать авторизацию
-    this.authorize = function(forse) {
+    /*
+     make OAuth request
+     boolean force - force authorization even if token is ok,
+     boolean blindMode - if we need interaction with a user, authorization fails = do noe show windows
+     boolean useSelectAccount - check account
+     */
+    this.authorizeNew = function(force, blindMode, useSelectAccount) {
         if (parent.isAutorizing){
             return;
         }
 
-        if (parent.isTokenOk() && !forse)
-        {
-            // we are authorized already we should rise authorization event
+        // if token is ok we fire authorize event immediately
+        if (parent.isTokenOk() && !force) {
+            // we are authorized already we should raise authorization event
             window.dispatchEvent(parent.authorizeEvent);
             return;
         }
 
-        chrome.windows.create({'url': this.authRequest, 'type': 'panel', 'width' : 450, 'height' : 550}, this.onWinAuthCreated
-        );
-    };
+        parent.isAutorizing = true;
+        var request = useSelectAccount? parent.authRequestWithSelectAccount : parent.authRequest;
 
+        chrome.identity.launchWebAuthFlow(
+            {'url': request, 'interactive': !blindMode},
+            function(redirect_url) {
+                parent.token = null;
+                parent.tokenExpiresIn = 0;
+                parent.tokenGetTime = 0;
+
+                parent.userCancelledAuthorize = redirect_url == null || parseValue(redirect_url, 'error=', '&') == "access_denied";
+
+                if (redirect_url != null) {
+                    var stateFromRedirect = parseValue(redirect_url, 'state=', '&');
+
+                    if (stateFromRedirect != parent.state) {
+                        console.log("The states are different: " + parent.state + " " + stateFromRedirect);
+                        return;
+                    }
+                }
+
+                if (chrome.runtime.lastError) {
+                    console.log("authorizeError " + chrome.runtime.lastError.message);
+                    parent.isAutorizing = false;
+                    window.dispatchEvent(parent.authorizeEvent);
+                    return;
+                }
+
+                parent.token = parseValue(redirect_url, 'access_token=', '&');
+                parent.tokenExpiresIn = parseValue(redirect_url, 'expires_in=', '&');
+                parent.tokenGetTime = getCurrentTime()
+                parent.isAutorizing = false;
+                window.dispatchEvent(parent.authorizeEvent);
+            });
+    }
+
+    /*
+        make token bad
+        callback - the callback function
+     */
+    this.revoke = function(callback){
+        if (!parent.isTokenOk()) {
+            console.Log('Revoke: token is bad or exprired');
+            return;
+        }
+
+        chrome.identity.removeCachedAuthToken({ token:  parent.token},
+            function() {
+                if (chrome.runtime.lastError) {
+                    console.log("revokeError " + chrome.runtime.lastError.message);
+                    callback();
+                    return;
+                }
+
+                 parent.token = null;
+                 parent.tokenExpiresIn = 0;
+                 parent.tokenGetTime = 0;
+
+                console.log("revoke ok");
+                callback();
+            });
+    }
+
+
+    /*
+        make token bad and revoke rights that user gave to app
+     */
+    this.revokeAuth = function() {
+        if (parent.token == null)  {
+            console.Log('RevokeAuth: token is bad or exprired');
+            return;
+        }
+
+        var tokenSv = parent.token;
+        parent.revoke(function() {});
+
+        var xhr = new XMLHttpRequest();
+
+        try {
+            xhr.open('GET', 'https://accounts.google.com/o/oauth2/revoke?token=' +
+                tokenSv);
+            xhr.send();
+        }
+        catch (e) {
+            console.log('ex: ' + e);
+        }
+    }
+
+  /*  this.onRevokeAuthDone = function(xhr) {
+        if (xhr.readyState != 4) {
+            return;
+        }
+
+        if (xhr.status != ST_REQUEST_OK) {
+            try {
+                var text = this.response;
+                var obj = JSON.parse(text);
+                var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
+                alert(error);
+            }
+            catch (e) {
+                console.log('ex: ' + e);
+            }
+        }
+        else {
+            parent.token = null;
+            parent.tokenExpiresIn = 0;
+            parent.tokenGetTime = 0;
+        //    callback();
+        }
+    }*/
+
+    /*callback function for an authorizeEvent event, sends savedRequest*/
     this.onAutorized = function() {
         if (parent.savedRequest != null)
         {
             // sending saved request
             parent.savedRequest.setRequestHeader('Authorization', 'Bearer ' + parent.token );
             parent.savedRequest.send(parent.savedRequestBody);
-
-            setTimeout(parent.resetRequest, 2000);
+            parent.resetRequest();
         }
     }
 
+    /* frees saved Request*/
     this.resetRequest = function () {
         parent.savedRequest = null;
         parent.savedRequestBody = null;
     }
 
+    // fires when authorization is completed
     this.authorizeEvent = new CustomEvent("Authorize");
 };
 
-OAuth2.prototype.initBackgroundPage = function() {
-
-    var callback =  this.onTabUpdate;
-    chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-        callback(tabId, changeInfo, tab);
-    });
-
-    var callback2 = this.onTabRemoved;
-    chrome.tabs.onRemoved.addListener(function (tabId) {
-        callback2(tabId);
-    });
-
-    window.addEventListener('Authorize', this.onAutorized, false)
+// inits oauth
+OAuth2.prototype.init = function() {
+    window.addEventListener('Authorize', this.onAutorized, false);
 }
 
+// returns true if token is ok (that means that connection is ok and we can make requests)
 OAuth2.prototype.isTokenOk = function() {
     return this.token != null && ((getCurrentTime() - this.tokenGetTime) * 0.001 < this.tokenExpiresIn);
 }
 
+// returns true if no request is processing and we can set some request (with setSigned request)
+// false if request is processing (for example, we are waiting for authorization)
 OAuth2.prototype.allowRequest = function () {
     return this.savedRequest == null;
 }
-/*
-    request - HttpRequest
-    body - body of a query
-*/
-OAuth2.prototype.setSignedRequest = function(request, body) {
+/*  sets request to proceed
+    string request - HttpRequest
+    string body - body of a query
+    boolean blindMode - if true no authorization windows will be shown */
+OAuth2.prototype.setSignedRequest = function(request, body, blindMode) {
     if (this.savedRequest != null)
     {
         return;
@@ -146,9 +223,35 @@ OAuth2.prototype.setSignedRequest = function(request, body) {
     this.savedRequest = request;
     this.savedRequestBody = body;
 
-    this.authorize(false);
+    this.authorize(false, blindMode, false);
 }
 
+/*
+ Special request with authorization (selecting Google account)
+ string request - HttpRequest
+ string body - body of a query
+ boolean blindMode = false authorization window will be shown anyway
+ */
+OAuth2.prototype.setSignedRequestSpec = function(request, body) {
+    if (this.savedRequest != null)
+    {
+        return;
+    }
+
+    // saving request
+    this.savedRequest = request;
+    this.savedRequestBody = body;
+
+    this.authorize(false, false, true);
+}
+
+/*
+      Gives a part of the string between begStr and endStr
+      string sourceStr - the source string,
+      string begStr - the string before searching substring,
+      string endStr - the string after searching string
+      returns  substring between if begStr and endStr are found, null if begStr is not found, substring to end from begStr if begStr is found, endStr is not
+ */
 function parseValue(sourceStr, begStr, endStr)
 {
     if (sourceStr.indexOf(begStr) == -1){
@@ -162,6 +265,9 @@ function parseValue(sourceStr, begStr, endStr)
     return temp;
 }
 
+/*
+ returns current time as integer (in ms)
+*/
 function getCurrentTime() {
     return (new Date()).getTime();
 };
