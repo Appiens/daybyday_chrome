@@ -6,9 +6,18 @@
     border: 1px solid green;
 }
 
+body, html {
+    width:100%;
+    min-height: 90%;
+}
+
 form {
     width:320px;
-   /* height:1500px;*/
+    /*min-height:400px;*/
+    font-family: Arial;
+    font-weight:normal;
+    font-style:normal;
+    font-size: 14px;
 }
 
 /* описывает линию, которя отделяет вкладку и названия вкладок*/
@@ -67,25 +76,26 @@ ul#Tabs {
     cursor: default;
 }
 
-#Two a {
+#page-add-event a {
     display: block;
     color: #666666;
     text-decoration: none;
 }
 
-#Two a:hover {
+#page-add-event a:hover {
     color: #468ccf;
 }
 
-/*input {
+input {
     width:97%;
-    min-height:30px;
+    /*min-height:30px;*/
+    padding-left:5px;
     display:block;
     margin-bottom:15px;
     margin-top:5px;
     outline: none;
     box-sizing:content-box;
-}*/
+}
 
 input[type=button] {
     -moz-box-shadow:inset 0px 1px 0px 0px #bee2f9;
@@ -175,8 +185,9 @@ input[type=button]:disabled {
      width:97%;
      min-height:20px;
      display:block;
-     margin-bottom:5px;
+     margin-bottom:15px;
      margin-top:5px;
+     padding-left:5px;
      outline: none;
      box-sizing:content-box;
  }
@@ -197,7 +208,7 @@ input[type=button]:disabled {
     /*font-size:20px;*/
     min-height:10px;
     display:inline;
-    horizontal-align:left;
+    horizontal-align:right;
     vertical-align:middle;
     margin:0px;
     margin-bottom:5px;

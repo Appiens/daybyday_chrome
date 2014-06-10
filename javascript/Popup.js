@@ -1,10 +1,11 @@
 /**
  * Created by AstafyevaLA on 29.04.2014.
  */
+var remDivName = "div-event-remind-";
 
 var repetitionPeriods =
-    [ "repetition_interval_everyweek$WEEKLY",
-      "repetition_interval_everyday$DIALY",
+    [ "repetition_interval_everyday$DIALY",
+      "repetition_interval_everyweek$WEEKLY",
       "repetition_interval_everymonth$MONTHLY",
       "repetition_interval_everyyear$YEARLY"];
 
@@ -57,6 +58,9 @@ var MSG_ERROR;
 // сообщение об успехе (при добавлении мероприятия или задачи)
 var MSG_SUCCESS;
 
+// сообщение об отсутствии авторизации Google
+var MSG_UNAUTHORIZED;
+
 // available window states
 var ST_START = 0; // popup was just opened
 var ST_CONNECTED = 1; // having token already
@@ -93,10 +97,12 @@ function init() {
         changeState(ST_DISCONNECTED);
     }
     else {
+        changeState(ST_CONNECTING);
         if (backGround.oauthMine.isTokenOk()) {
-            changeState(ST_CONNECTED);
 
-            if (backGround.taskLists != null && backGround.userName != null) {
+
+            if (backGround.taskLists != [] && backGround.userName != null && backGround.calendarLists != []) {
+
                 backGround.LogMsg('Popup: taking old vals');
                 GetGoogleInfoFromBackGround();
             }
@@ -106,16 +112,16 @@ function init() {
             }
         }
         else {
-            changeState(ST_CONNECTING);
+
             backGround.LogMsg('Popup: loading vals');
             GetGoogleInfo(false);
         }
     }
 
     //fill combos
-    FillCombo($('erepeatintervalenter'), repetitionPeriodsLocale);
+    FillCombo($('combo-repetition-interval'), repetitionPeriodsLocale);
     for (var i=1; i<=5; i++) {
-        var combo = $('erem' + i.toString() + 'combo');
+        var combo = $(GetRemindComboName(i));
         FillCombo(combo, reminderPeriodsLocale);
     }
 
@@ -149,21 +155,27 @@ function GetGoogleInfoFromBackGround() {
 /* if error occured while adding task, this task is saved in the taskInProcess variable */
 function RestoreTaskInProcess() {
     if (backGround.taskInProcess != null) {
-        $('tasknameenter').value = backGround.taskInProcess.name;
-        $('taskdateenter').value = backGround.taskInProcess.date;
-        $('taskcommententer').value = backGround.taskInProcess.notes;
+        $('input-task-name').value = backGround.taskInProcess.name;
+        $('input-task-date').value = backGround.taskInProcess.date != null ? backGround.taskInProcess.date : CurrDateStr(new Date());
+        $('input-task-comment').value = backGround.taskInProcess.notes;
+        $('checkbox-no-date').checked = backGround.taskInProcess.date != null;
     }
+    else {
+        $('input-task-date').value = CurrDateStr(new Date());
+    }
+
+
 }
 
 function RestoreEventInProcess() {
     if (backGround.eventInProcess != null) {
-        $('enameenter').value = backGround.eventInProcess.name;
-        $('edatestartenter').value = backGround.eventInProcess.dateStart;
-        $('edateendenter').value= backGround.eventInProcess.dateEnd;
-        $('ecommententer').value = backGround.eventInProcess.description;
-        $('eallday').checked = backGround.eventInProcess.allDay;
-        $('eplaceenter').value = backGround.eventInProcess.place;
-        $('erepeatcheck').checked =  backGround.eventInProcess.recurrenceTypeValue != null;
+        $('input-event-name').value = backGround.eventInProcess.name;
+        $('input-event-from').value = backGround.eventInProcess.dateStart;
+        $('input-event-to').value= backGround.eventInProcess.dateEnd;
+        $('input-event-comment').value = backGround.eventInProcess.description;
+        $('checkbox-all-day').checked = backGround.eventInProcess.allDay;
+        $('input-event-place').value = backGround.eventInProcess.place;
+        $('checkbox-repetition').checked =  backGround.eventInProcess.recurrenceTypeValue != null;
 
         // restoring repetition period
         if (backGround.eventInProcess.recurrenceTypeValue != null) {
@@ -173,7 +185,7 @@ function RestoreEventInProcess() {
                 }
             }
 
-            $('erepeatintervalenter').selectedIndex = i;
+            $('combo-repetition-interval').selectedIndex = i;
         }
 
         // restoring reminders
@@ -188,7 +200,7 @@ function RestoreEventInProcess() {
                     }
                 }
 
-                $('erem' + (j+1).toString() + 'combo').selectedIndex = i;
+                $(GetRemindComboName(j+1)).selectedIndex = i;
             }
         }
     }
@@ -196,22 +208,23 @@ function RestoreEventInProcess() {
 
 function AddEventHandlers() {
     // adding event handlers to tasks
-    $('addTask').addEventListener('click', GotoTaskTab);
-    $('addEvent').addEventListener('click', GotoEventTab);
-    $('auth').addEventListener('click', GotoAuthTab);
-    $('buttonaddtask').addEventListener('click', DoAddTask);
-    $('buttonauth').addEventListener('click', DoAuthorize);
-    $('buttonrevoke').addEventListener('click', DoLogOut);
-    $('buttonaddevent').addEventListener('click', DoAddEvent);
-    $('erepeatcheck').addEventListener('change', OnRepeatCheckChanged);
+    $('tab-add-task').addEventListener('click', GotoTaskTab);
+    $('tab-add-event').addEventListener('click', GotoEventTab);
+    $('tab-sign-in').addEventListener('click', GotoAuthTab);
+    $('button-add-task').addEventListener('click', DoAddTask);
+    $('button-sign-in').addEventListener('click', DoAuthorize);
 
+    $('button-add-event').addEventListener('click', DoAddEvent);
+    $('checkbox-repetition').addEventListener('change', OnRepeatCheckChanged);
+    $('checkbox-no-date').addEventListener('change', OnNoDateCheckChanged);
+       // OnNoDateCheckChanged
     // hrefs
-    $('linkToCal').addEventListener('click', OpenCalTab);
-    $('addRem').addEventListener('click', AddReminderDiv);
+    $('href-google-cal').addEventListener('click', OpenCalTab);
+    $('href-add-remind').addEventListener('click', AddReminderDiv);
 
     var list=document.getElementsByTagName("a");
     for (var i = 0; i < list.length; i++) {
-        if (list[i].id.substr(0, 4) != "erem") {
+        if (list[i].id.substr(0, 16) != "div-event-remind") {
             continue;
         }
 
@@ -219,15 +232,15 @@ function AddEventHandlers() {
     }
 
     // input to task fields
-    $('tasknameenter').addEventListener('input', SetButtonAddTaskState);
-    $('tasklistenter').addEventListener('input', SetButtonAddTaskState);
-    $('taskdateenter').addEventListener('input', SetButtonAddTaskState);
+    $('input-task-name').addEventListener('input', SetButtonAddTaskState);
+    $('combo-task-list').addEventListener('input', SetButtonAddTaskState);
+    $('input-task-date').addEventListener('input', SetButtonAddTaskState);
 
        // input to event fields
-    $('enameenter').addEventListener('input', SetButtonAddEventState);
-    $('ecalendarenter').addEventListener('input', SetButtonAddEventState);
-    $('edatestartenter').addEventListener('input', SetButtonAddEventState);
-    $('edateendenter').addEventListener('input', SetButtonAddEventState);
+    $('input-event-name').addEventListener('input', SetButtonAddEventState);
+    $('combo-event-calendar').addEventListener('input', SetButtonAddEventState);
+    $('input-event-from').addEventListener('input', SetButtonAddEventState);
+    $('input-event-to').addEventListener('input', SetButtonAddEventState);
 
     chrome.runtime.onMessage.addListener(OnGotMessage);
 }
@@ -235,87 +248,83 @@ function AddEventHandlers() {
 function UpdateCurrentState() {
     switch (currentState) {
         case ST_START:
-            enableButton($('buttonauth'));
-            disableButton( $('buttonrevoke'));
             break;
         case ST_CONNECTED:
+            disableButton($('button-sign-in'));
             SetAllElemsVisibility('visible');
-            $('taskloading').style.display='none';
-            if ($('auth').className = 'SelectedTab') {
-                GotoTaskTab();
+            $('label-user-message').style.display='none';
+            if ($('tab-sign-in').className = 'SelectedTab') {
+                GotoEventTab();
             }
-            $('addTask').style.visibility = 'visible';
-            $('addEvent').style.visibility = 'visible';
-            $('auth').style.visibility = 'visible';
-            disableButton($('buttonauth'));
-            enableButton( $('buttonrevoke'));
+
+            setTabsVisibility(true, true, true);
             break;
         case ST_CONNECTING:
             GotoAuthTab();
             SetAllElemsVisibility('hidden');
-            $('taskloading').style.display='';
-            $('taskloading').innerHTML = MSG_LOADING;
-            $('addTask').style.visibility = 'hidden';
-            $('addEvent').style.visibility = 'hidden';
-            $('auth').style.visibility = 'hidden';
+            ShowMessageToUser(MSG_LOADING);
+            setTabsVisibility(false, false, false);
             break;
         case ST_DISCONNECTED:
             GotoAuthTab();
+            enableButton($('button-sign-in'));
             SetAllElemsVisibility('visible');
-            $('taskloading').style.display='none';
-            $('addTask').style.visibility = 'hidden';
-            $('addEvent').style.visibility = 'hidden';
-            $('auth').style.visibility = 'visible';
-            enableButton($('buttonauth'));
-            disableButton( $('buttonrevoke'));
-            $('labelName').innerHTML = unknownUserName;
+            $('label-user-message').style.display='none';
+            setTabsVisibility(true, false, false);
+            $('label-account-name').innerHTML = MSG_UNAUTHORIZED; // unknownUserName;
             break;
         case ST_ERROR:
             SetAllElemsVisibility('hidden');
-            $('taskloading').style.display='';
-            $('taskloading').innerHTML = MSG_ERROR;
-            $('addTask').style.visibility = 'hidden';
-            $('addEvent').style.visibility = 'hidden';
-            $('auth').style.visibility = 'hidden';
+            ShowMessageToUser(MSG_ERROR);
+            setTabsVisibility(false, false, false);
+            DoLogOut();
             setTimeout(function() { window.close(); }, 1500);
             break;
         case ST_SUCCESS:
             SetAllElemsVisibility('hidden');
-            $('taskloading').style.display='';
-            $('taskloading').innerHTML = MSG_SUCCESS;
-            $('addTask').style.visibility = 'hidden';
-            $('addEvent').style.visibility = 'hidden';
-            $('auth').style.visibility = 'hidden';
+            ShowMessageToUser(MSG_SUCCESS);
+            setTabsVisibility(false, false, false);
             setTimeout(function() { window.close(); }, 1500);
             break;
     }
 }
 
+function setTabsVisibility(authVisibility, addTaskVisibility, addEventVisibility) {
+    $('tab-add-task').style.display = addTaskVisibility? '': 'none';
+    $('tab-add-event').style.display = addEventVisibility? '': 'none';
+    $('tab-sign-in').style.display = authVisibility? '': 'none';
+}
+
+function ShowMessageToUser(message) {
+    $('label-user-message').style.display='';
+    $('label-user-message').innerHTML = message;
+}
+
 function GotoTaskTab() {
-    $('addTask').className = 'SelectedTab';
-    $('addEvent').className = 'Tab';
-    $('auth').className = 'Tab';
-    $('One').style.display = 'block';
-    $('Two').style.display = 'none';
-    $('Three').style.display = 'none';
+    $('tab-add-task').className = 'SelectedTab';
+    $('tab-add-event').className = 'Tab';
+    $('tab-sign-in').className = 'Tab';
+    $('page-add-task').style.display = 'block';
+    $('page-add-event').style.display = 'none';
+    $('page-sign-in').style.display = 'none';
 }
 
 function GotoEventTab() {
-    $('addTask').className = 'Tab';
-    $('addEvent').className = 'SelectedTab';
-    $('auth').className = 'Tab';
-    $('One').style.display = 'none';
-    $('Two').style.display = 'block';
-    $('Three').style.display = 'none';
+    $('tab-add-task').className = 'Tab';
+    $('tab-add-event').className = 'SelectedTab';
+    $('tab-sign-in').className = 'Tab';
+    $('page-add-task').style.display = 'none';
+    $('page-add-event').style.display = 'block';
+    $('page-sign-in').style.display = 'none';
 }
 
 function GotoAuthTab() {
-    $('addTask').className = 'Tab';
-    $('addEvent').className = 'Tab';
-    $('auth').className = 'SelectedTab';
-    $('One').style.display = 'none';
-    $('Two').style.display = 'none';
-    $('Three').style.display = 'block';
+    $('tab-add-task').className = 'Tab';
+    $('tab-add-event').className = 'Tab';
+    $('tab-sign-in').className = 'SelectedTab';
+    $('page-add-task').style.display = 'none';
+    $('page-add-event').style.display = 'none';
+    $('page-sign-in').style.display = 'block';
 }
 
 function OpenCalTab() {
@@ -331,12 +340,12 @@ function OpenCalTab() {
 
 function MakeReminderTimeArray() {
     var reminderTimeArray = [];
-    var remName = "Rem";
+    var remName = remDivName; //"Rem";
 
     for (var i=1; i<=5; i++) {
         var div = $(remName + i.toString());
         if (div.style.display == '') {
-            reminderTimeArray.push(reminderPeriods[$('erem' + i.toString() + 'combo').selectedIndex]);
+            reminderTimeArray.push(reminderPeriods[$(GetRemindComboName(i)).selectedIndex]);
         }
     }
 
@@ -344,7 +353,7 @@ function MakeReminderTimeArray() {
 }
 
 function CloseReminderDiv(e) {
-    var remName = "Rem";
+    var remName = remDivName;//"Rem";
     var cnt = 0;
     var targ;
 
@@ -360,7 +369,7 @@ function CloseReminderDiv(e) {
 
     if (divId) {
         targ.parentNode.style.display = 'none';
-        $('addRem').style.display = '';
+        $('href-add-remind').style.display = '';
     }
 
     for (var i=1; i<=5; i++) {
@@ -371,20 +380,20 @@ function CloseReminderDiv(e) {
     }
 
     if (cnt == 5) {
-        $('eremind').style.display = 'none';
+        $('label-event-remind').style.display = 'none';
     }
 
 }
 
 function AddReminderDiv() {
-    var remName = "Rem";
+    var remName = remDivName; //"Rem";
     var cnt = 0;
 
     for (var i=1; i<=5; i++) {
         var div = $(remName + i.toString());
         if (div.style.display == 'none') {
             div.style.display = '';
-            $('eremind').style.display = '';
+            $('label-event-remind').style.display = '';
             cnt++;
             break;
         }
@@ -394,7 +403,7 @@ function AddReminderDiv() {
     }
 
     if (cnt == 5) {
-        $('addRem').style.display = 'none';
+        $('href-add-remind').style.display = 'none';
     }
 }
 
@@ -402,7 +411,7 @@ function AddReminderDiv() {
 function getTasks() {
     if (backGround.oauthMine.allowRequest()) {
         backGround.LogMsg('Popup: getTasks');
-        backGround.AskForTaskLists(false);
+        backGround.AskForTaskLists(true);
     }
     else {
         setTimeout(getTasks, 1000);
@@ -411,7 +420,7 @@ function getTasks() {
 
 /* asking for task lists with authorization (can select account) */
 function authAndGetTasks() {
-    if (backGround.oauthMine.allowRequest()) {
+    if (/*backGround.oauthMine.allowRequest()*/ true == true) {
         backGround.LogMsg('Popup: authAndGetTasks');
         backGround.AuthAndAskForTaskLists();
     }
@@ -428,7 +437,7 @@ function getName() {
 
     }
     else {
-        setTimeout(getName, 1000);
+            setTimeout(getName, 1000);
     }
 }
 
@@ -509,7 +518,7 @@ function OnGotMessage(request, sender, sendResponse) {
 
 function GetCalendarList(requestIsOk) {
     var index = -1;
-    var x = $('ecalendarenter');
+    var x = $('combo-event-calendar');
 
     // clears options
     x.options.length = 0;
@@ -518,7 +527,7 @@ function GetCalendarList(requestIsOk) {
 
     backGround.LogMsg('Popup: GotCalendarLists!');
 
-    if (!requestIsOk) {
+    if (!requestIsOk || calendarLists.length == 0) {
         changeState(ST_ERROR);
         return;
     }
@@ -536,21 +545,22 @@ function GetCalendarList(requestIsOk) {
     if (backGround.eventInProcess != null) {
         index = SearchCalendarIndexById(backGround.eventInProcess.listId );
         if (index != -1) {
-            $('ecalendarenter').value = backGround.eventInProcess.listName;
+            $('combo-event-calendar').value = backGround.eventInProcess.listName;
         }
         else {
-            $('ecalendarenter').value = "???";
+            $('combo-event-calendar').value = "???";
         }
     }
 
     if (currentState != ST_CONNECTED) {
         changeState(ST_CONNECTED);
     }
+
 }
 
 function GetTaskLists(requestIsOk) {
     var index = -1;
-    var x = $('tasklistenter');
+    var x = $('combo-task-list');
 
     // clears options
     x.options.length = 0;
@@ -560,7 +570,7 @@ function GetTaskLists(requestIsOk) {
 
     backGround.LogMsg('Popup: GotTaskLists!');
 
-    if (!requestIsOk) {
+    if (!requestIsOk || taskLists.length == 0) {
         changeState(ST_ERROR);
         return;
     }
@@ -576,16 +586,16 @@ function GetTaskLists(requestIsOk) {
     if (backGround.taskInProcess != null) {
         index = SearchTaskListIndexById(backGround.taskInProcess.listId );
         if (index != -1) {
-            $('tasklistenter').value = backGround.taskInProcess.listName;
+            $('combo-task-list').value = backGround.taskInProcess.listName;
         }
         else {
-            $('tasklistenter').value = "???";
+            $('combo-task-list').value = "???";
         }
     }
 
-    if (currentState != ST_CONNECTED) {
+  /*  if (currentState != ST_CONNECTED) {
         changeState(ST_CONNECTED);
-    }
+    }*/
 }
 
 
@@ -598,10 +608,10 @@ function GetUserName(requestIsOk) {
     }
 
     if (backGround.userName != null) {
-        $('labelName').innerHTML = backGround.userName;
+        $('label-account-name').innerHTML = backGround.userName;
     }
     else {
-        $('labelName').innerHTML = unknownUserName;
+        $('label-account-name').innerHTML = unknownUserName;
     }
 }
 
@@ -613,10 +623,10 @@ function DoAddTask() {
         return;
     }
 
-    var name = $('tasknameenter').value;
-    var listName = $('tasklistenter').value;
-    var date = $('taskdateenter').value;
-    var notes = $('taskcommententer').value;
+    var name = $('input-task-name').value;
+    var listName = $('combo-task-list').value;
+    var date = $('checkbox-no-date').checked ?  $('input-task-date').value : null;
+    var notes = $('input-task-comment').value;
 
     backGround.AddTask(name, listName, date,  notes);
 }
@@ -628,14 +638,14 @@ function DoAddEvent() {
         return;
     }
 
-    var name = $('enameenter').value;
-    var listName = $('ecalendarenter').value;
-    var dateStart = $('edatestartenter').value;
-    var dateEnd = $('edateendenter').value;
-    var description = $('ecommententer').value;
-    var allDay = $('eallday').checked;
-    var place = $('eplaceenter').value;
-    var recurrenceTypeIndex = $('erepeatcheck').checked? $('erepeatintervalenter').selectedIndex : -1;
+    var name = $('input-event-name').value;
+    var listName = $('combo-event-calendar').value;
+    var dateStart = $('input-event-from').value;
+    var dateEnd = $('input-event-to').value;
+    var description = $('input-event-comment').value;
+    var allDay = $('checkbox-all-day').checked;
+    var place = $('input-event-place').value;
+    var recurrenceTypeIndex = $('checkbox-repetition').checked? $('combo-repetition-interval').selectedIndex : -1;
     var recurrenceTypeValue = recurrenceTypeIndex  > -1 ? repetitionPeriods[recurrenceTypeIndex] : null;
 
     var reminderTimeArray = MakeReminderTimeArray();
@@ -651,7 +661,9 @@ function DoAuthorize() {
 
 function DoLogOut() {
     backGround.LogMsg('Popup: Revoke called');
-    changeState(ST_CONNECTING);
+
+
+ //   changeState(ST_CONNECTING);
     backGround.oauthMine.revoke(OnLoggedout);
 }
 
@@ -666,9 +678,9 @@ function OnLoggedout() {
 
 // visibility = 'visible' || 'hidden'
 function SetAllElemsVisibility(visibility) {
-    $('One').style.visibility = visibility;
-    $('Two').style.visibility = visibility;
-    $('Three').style.visibility = visibility;
+    $('page-add-task').style.visibility = visibility;
+    $('page-add-event').style.visibility = visibility;
+    $('page-sign-in').style.visibility = visibility;
 }
 
 function LocalizeComboOption(item, i, arr) {
@@ -677,22 +689,25 @@ function LocalizeComboOption(item, i, arr) {
 }
 
 function LocalizePage() {
-    // tasks
-    $('taskname').innerHTML =
-        chrome.i18n.getMessage('task_name_title');
-    $('tasklist').innerHTML =
-        chrome.i18n.getMessage('task_list_title');
-    $('at').innerHTML =
+        // tabs
+    $('href-sign-in').innerHTML =
         chrome.i18n.getMessage('authorize_tab_title');
-    $('att').innerHTML =
-     chrome.i18n.getMessage('add_task_tab_title');
-    $('aet').innerHTML =
-     chrome.i18n.getMessage('add_event_action_title');
-    $('taskdate').innerHTML =
+    $('href-add-task').innerHTML =
+        chrome.i18n.getMessage('add_task_tab_title');
+    $('href-add-event').innerHTML =
+        chrome.i18n.getMessage('add_event_tab_title');
+    
+    // tasks
+    $('input-task-name').placeholder =
+        chrome.i18n.getMessage('task_name_title');
+    $('label-task-list').innerHTML =
+        chrome.i18n.getMessage('task_list_title');
+
+    $('label-task-date').innerHTML =
         chrome.i18n.getMessage('task_date_title');
-    $('taskcomment').innerHTML =
+    $('input-task-comment').placeholder =
         chrome.i18n.getMessage('task_comment_title');
-    $('buttonaddtask').value =
+    $('button-add-task').value =
         chrome.i18n.getMessage('add_task_action_title');
 
     // localized combo lists
@@ -701,38 +716,40 @@ function LocalizePage() {
     repetitionPeriodsLocale.forEach(LocalizeComboOption);
     reminderPeriodsLocale.forEach(LocalizeComboOption);
 
-    $('ename').innerHTML =
-        chrome.i18n.getMessage('event_name');
-    $('edatestart').innerHTML =
-        chrome.i18n.getMessage('event_start_date_title');
-    $('edateend').innerHTML =
-        chrome.i18n.getMessage('event_end_date_title');
-    $('erpt').innerHTML =
-        chrome.i18n.getMessage('repetition_is_checked');
-    $('ealldaytext').innerHTML =
-        chrome.i18n.getMessage('all_day_is_checked');
-    $('erepeatinterval').innerHTML =
-        chrome.i18n.getMessage('repetition_interval_title');
-    $('ecomment').innerHTML =
-        chrome.i18n.getMessage('event_description_title');
-    $('eplace').innerHTML =
-        chrome.i18n.getMessage('event_place_title');
-    $('ecalendar').innerHTML=
-        chrome.i18n.getMessage('event_calendar_title');
-    $('buttonaddevent').value =
-        chrome.i18n.getMessage('add_event_action_title');
-    $('buttonauth').value =
+    // authorization
+    $('button-sign-in').value =
         chrome.i18n.getMessage('authorize_tab_title');
-    $('buttonrevoke').value =
-        chrome.i18n.getMessage('logout_action_title');
 
-    $('eremind').innerHTML =
+    // event
+
+    $('input-event-name').placeholder =
+        chrome.i18n.getMessage('event_name');
+    $('label-event-from').innerHTML =
+        chrome.i18n.getMessage('event_start_date_title');
+    $('label-event-to').innerHTML =
+        chrome.i18n.getMessage('event_end_date_title');
+    $('label-repetition').innerHTML =
+        chrome.i18n.getMessage('repetition_is_checked');
+    $('label-all-day').innerHTML =
+        chrome.i18n.getMessage('all_day_is_checked');
+    $('label-repetition-interval').innerHTML =
+        chrome.i18n.getMessage('repetition_interval_title');
+    $('input-event-comment').placeholder =
+        chrome.i18n.getMessage('event_description_title');
+    $('input-event-place').placeholder =
+        chrome.i18n.getMessage('event_place_title');
+    $('label-event-calendar').innerHTML=
+        chrome.i18n.getMessage('event_calendar_title');
+    $('button-add-event').value =
+        chrome.i18n.getMessage('add_event_action_title');
+
+    $('label-event-remind').innerHTML =
         chrome.i18n.getMessage('reminder_title');
-    $('addRem').innerHTML =
+    $('href-add-remind').innerHTML =
         chrome.i18n.getMessage('reminder_add_action_title');
 
     for (var i=1; i<=5; i++) {
-        var label = $('erem' + i.toString() + 'label');
+        var label = $(GetRemindLabelName(i));
         label.innerHTML =
             chrome.i18n.getMessage('reminder_type');
     }
@@ -741,6 +758,15 @@ function LocalizePage() {
     MSG_LOADING = chrome.i18n.getMessage('loading_message');
     MSG_ERROR = chrome.i18n.getMessage('error_message');
     MSG_SUCCESS = chrome.i18n.getMessage('success_message');
+    MSG_UNAUTHORIZED = chrome.i18n.getMessage('unauthorized_message');
+}
+
+function GetRemindLabelName(i) {
+    return "label-event-remind-" + i.toString();
+}
+
+function GetRemindComboName(i) {
+    return "combo-event-remind-" + i.toString();
 }
 
 function changeState(newState) {
@@ -773,24 +799,24 @@ function SearchCalendarIndexById(id) {
 
 function SetButtonAddTaskState() {
     if (AreAllTaskfieldsValid()) {
-        enableButton($('buttonaddtask'));
+        enableButton($('button-add-task'));
     }
     else {
-        disableButton($('buttonaddtask'));
+        disableButton($('button-add-task'));
     }
 }
 
 function SetButtonAddEventState() {
     if (AreAllEventFieldsValid()) {
-        enableButton($('buttonaddevent'));
+        enableButton($('button-add-event'));
     }
     else {
-        disableButton($('buttonaddevent'));
+        disableButton($('button-add-event'));
     }
 }
 
 function AreAllTaskfieldsValid() {
-    if  ($('tasknameenter').checkValidity() && $('tasklistenter').checkValidity() && $('taskdateenter').checkValidity()) {
+    if  ($('input-task-name').checkValidity() && $('combo-task-list').checkValidity() /*&& $('input-task-date').checkValidity()*/) {
         return true;
     }
     else {
@@ -799,7 +825,7 @@ function AreAllTaskfieldsValid() {
 }
 
 function AreAllEventFieldsValid() {
-    if  ($('enameenter').checkValidity() && $('edatestartenter').checkValidity() && $('edateendenter').checkValidity() && $('ecalendarenter').checkValidity()) {
+    if  ($('input-event-name').checkValidity() && $('input-event-from').checkValidity() && $('input-event-to').checkValidity() && $('combo-event-calendar').checkValidity()) {
         return true;
     }
     else {
@@ -808,13 +834,22 @@ function AreAllEventFieldsValid() {
 }
 
 function OnRepeatCheckChanged () {
-    if ($('erepeatcheck').checked) {
-        $('erepeatinterval').style.display = '';
-        $('erepeatintervalenter').style.display = '';
+    if ($('checkbox-repetition').checked) {
+     //   $('erepeatinterval').style.display = '';
+        $('combo-repetition-interval').style.display = '';
     }
     else {
-        $('erepeatinterval').style.display = 'none';
-        $('erepeatintervalenter').style.display = 'none';
+     //   $('erepeatinterval').style.display = 'none';
+        $('combo-repetition-interval').style.display = 'none';
+    }
+}
+
+function OnNoDateCheckChanged() {
+    if ($('checkbox-no-date').checked) {
+        $('input-task-date').style.display = '';
+    }
+    else {
+        $('input-task-date').style.display = 'none';
     }
 }
 

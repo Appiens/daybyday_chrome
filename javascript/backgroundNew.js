@@ -29,10 +29,10 @@ function updateView() {
 
     if (currTokenOk != isTokenOk) {
         if (isTokenOk) {
-            chrome.browserAction.setIcon({ 'path' : '../images/icon-16.gif'});
+            chrome.browserAction.setIcon({ 'path' : '../images/daybyday16.png'});
         }
         else {
-            chrome.browserAction.setIcon({ 'path' : '../images/icon-16_bw.gif'});
+            chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
             taskLists = [];
             calendarLists = [];
             userName = null;
@@ -254,7 +254,9 @@ function AddTask(name, taskListName, date, notes) {
             LogMsg('AddTask: error: ' + error);
         };
 
-        date = date + 'T00:00:00Z';
+        if (date) {
+            date = date + 'T00:00:00Z';
+        }
 
         notes = filterSpecialChar(notes);
         name = filterSpecialChar(name);
@@ -263,7 +265,7 @@ function AddTask(name, taskListName, date, notes) {
 
         xhr.open('POST', url);
         xhr.setRequestHeader('Content-Type', 'application/json');
-        var params = '{"title":"' + name + '","due":"' + date + '","notes":"'+ notes + '"}';
+        var params = date == null ? '{"title":"' + name + '","notes":"'+ notes + '"}' : '{"title":"' + name + '","due":"' + date + '","notes":"'+ notes + '"}';
         oauthMine.setSignedRequest(xhr, params, true);
     }
     catch (e)
@@ -498,12 +500,13 @@ function LogMsg(message) {
     console.log(GetDateTimeStr() + ' ' + message);
 }
 
+
 function init () {
     updateView();
     oauthMine.init();
     window.setInterval(updateView, 1000);
     chrome.browserAction.setPopup({popup : "views/Popup.html"});
-    chrome.browserAction.setIcon({ 'path' : '../images/icon-16_bw.gif'});
+    chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
     oauthMine.authorize(false, true, false);
 }
 

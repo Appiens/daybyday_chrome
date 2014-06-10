@@ -12,198 +12,211 @@
 <form id="form">
     <!-- Сами вкладки -->
     <ul id="Tabs">
-        <li id="auth" class="Tab"><a href="#Three" id="at">Authorize</a></li>
-        <li id="addTask" class="SelectedTab"><a href="#One" id="att">Add task</a></li>
-        <li id="addEvent" class="Tab"><a href="#Two" id="aet">Add event</a></li>
+        <li id="tab-sign-in" class="Tab"><a href="#page-sign-in" id="href-sign-in">Authorize</a></li>
+        <li id="tab-add-task" class="SelectedTab"><a href="#page-add-task" id="href-add-task">Add task</a></li>
+        <li id="tab-add-event" class="Tab"><a href="#page-add-event" id="href-add-event">Add event</a></li>
     </ul>
 
-    <div style="text-align:center;vertical-align:middle;display:block;"><label id="taskloading"></label></div>
+    <div style="text-align:center;vertical-align:middle;display:block;"><label id="label-user-message"></label></div>
 
     <!-- Содержимое вкладок -->
     <div id="Content">
         <!-- Первая -->
-        <div id="One">
-                    <label id="taskname"></label>
-                    <input  type="text" id="tasknameenter" name="tasknameenter" required />
-                    <label id="tasklist"></label>
+        <div id="page-add-task">
+                    <label id="label-task-name" style="display:none;"></label>
+                    <input  type="text" id="input-task-name" name="input-task-name" required />
+                    <label id="label-task-list"></label>
                     <div class="new-select-style-wpandyou">
-                        <select name="tasklistenter" id="tasklistenter" required />
+                        <select name="combo-task-list" id="combo-task-list" required />
                         </select>
                     </div>
-                    <label id="taskdate"></label>
-                    <input type="date" id="taskdateenter" name="taskdateenter" required />
-                    <label id="taskcomment"></label>
+
+            <table cellpadding=1 width=97%>
+                <tr>
+                    <td style="width: 10%; text-align:left; vertical-align:middle;">
+                        <div class="check-box-style">
+                            <input type="checkbox" id="checkbox-no-date" name="checkbox-no-date" checked="true" title="">
+                        </div>
+                    </td>
+                    <td style="width: 90%; text-align:left; vertical-align:middle;">
+                        <label id="label-task-date"></label>
+                    </td>
+                </tr>
+            </table>
+                    <input type="date" id="input-task-date" name="input-task-date"/>
+                    <label id="label-task-comment" style="display:none;"></label>
                     <div class="new-select-style-wpandyou">
-                        <textarea name="taskcommententer" id="taskcommententer"  rows="2"></textarea>
+                        <textarea name="input-task-comment" id="input-task-comment"  rows="2"></textarea>
                      </div>
-                    <input type="button" id="buttonaddtask" name="buttonaddtask"/>
+                    <input type="button" id="button-add-task" name="button-add-task"/>
         </div>
 
         <!-- Вторая -->
-        <div id="Two">
-                    <label id="ename"></label>
+        <div id="page-add-event">
+                    <label id="label-event-name" style="display:none;"></label>
                     <div class="new-select-style-wpandyou">
-                        <input type="text" id="enameenter" name="enameenter" required>
+                        <input type="text" id="input-event-name" name="input-event-name" required>
                     </div>
-                        <label id="edatestart"></label>
-                        <input type="datetime-local" id="edatestartenter" name="edatestartenter" required>
-                        <label id="edateend"></label>
-                        <input type="datetime-local" id="edateendenter" name="edateendenter" required>
+                        <label id="label-event-from" style="display:none;"></label>
+                        <input type="datetime-local" id="input-event-from" name="input-event-from" required>
+                        <label id="label-event-to" style="display:none;"></label>
+                        <input type="datetime-local" id="input-event-to" name="input-event-to" required>
                     <table cellpadding=1 width=97%>
                         <tr>
-                            <td style="width: 10%; text-align:center; vertical-align:top;">
+                            <td style="width: 10%; text-align:center; vertical-align:middle;">
                                 <div class="check-box-style">
-                                    <input type="checkbox" id="eallday" name="eallday" title="">
+                                    <input type="checkbox" id="checkbox-all-day" name="checkbox-all-day" title="">
                                 </div>
                             </td>
-                            <td style="width: 40%; text-align:left; vertical-align:top;">
-                                <label id="ealldaytext"></label>
+                            <td style="width: 40%; text-align:left; vertical-align:middle;">
+                                <label id="label-all-day"></label>
                             </td>
-                            <td style="width: 10%; text-align:center; vertical-align:top;">
+                            <td style="width: 10%; text-align:center; vertical-align:middle;">
                                 <div class="check-box-style">
-                                  <input type="checkbox" id="erepeatcheck" name="erepeatcheck" title="">
+                                  <input type="checkbox" id="checkbox-repetition" name="checkbox-repetition" title="">
                                 </div>
                             </td>
-                            <td style="width: 40%; text-align:left; vertical-align:top;">
-                                <label id="erpt"></label>
+                            <td style="width: 40%; text-align:left; vertical-align:middle;">
+                                <label id="label-repetition"></label>
                             </td>
                         </tr>
                     </table>
-                    <label id="erepeatinterval"></label>
+                    <label id="label-repetition-interval" style="display:none;"></label>
                     <div class="new-select-style-wpandyou">
-                         <select name="erepeatintervalenter" id="erepeatintervalenter">
+                         <select name="combo-repetition-interval" id="combo-repetition-interval">
                          </select>
                     </div>
-                    <label id="ecomment"></label>
+                    <label id="label-event-comment" style="display:none;"></label>
                     <div class="new-select-style-wpandyou">
-                        <textarea name="ecommententer" id="ecommententer"  rows="2"></textarea>
+                        <textarea name="input-event-comment" id="input-event-comment"  rows="2"></textarea>
                     </div>
-                    <label id="eplace"></label>
+                    <label id="label-event-place" style="display:none;"></label>
                     <div class="new-select-style-wpandyou">
-                        <input type="text" id="eplaceenter" name="eplaceenter">
+                        <input type="text" id="input-event-place" name="input-event-place">
                     </div>
-                    <label id="ecalendar"></label>
+                    <label id="label-event-calendar" style="display:none;"></label>
                     <div class="new-select-style-wpandyou">
-                        <select name="ecalendarenter" id="ecalendarenter" required>
+                        <select name="combo-event-calendar" id="combo-event-calendar" required>
                         </select>
                     </div>
 
-                    <label id="eremind" style="display:none;"></label><br>
-                    <div id="Rem1" style="display:none;">
-                        <table cellpadding=1 width=97%>
+                    <label id="label-event-remind" style="display:none;"></label>
+                    <div id="div-event-remind-1" style="display:none;">
+                        <table cellpadding=0 width=97%>
                             <tr>
-                                <td style="width: 60%; text-align:left;">
-                                    <label id="erem1label"></label>
+                                <td style="width: 50%; text-align:left;">
+                                    <label id="label-event-remind-1"></label>
                                 </td>
-                                <td style="width: 39%;">
+                                <td style="width: 40%;">
                                     <div class="new-select-style-reminder">
-                                        <select name="erem1combo" id="erem1combo">
+                                        <select name="combo-event-remind-1" id="combo-event-remind-1">
                                         </select>
                                     </div>
                                 </td>
-                                <td style="text-align:center;">
-                                    <a href = "#" id="erem1close">
-                                        X
+                                <td style="text-align:center;font-size : large">
+                                   <a href = "#" id="div-event-remind-1-close">
+                                        &times;
                                     </a>
                                 </td>
                             </tr>
                         </table>
                     </div>
-                    <div id="Rem2" style="display:none;">
+                    <div id="div-event-remind-2" style="display:none;">
                         <table cellpadding=1 width=97%>
                             <tr>
-                                <td style="width: 60%; text-align:left;">
-                                    <label id="erem2label"></label>
+                                <td style="width: 50%; text-align:left;">
+                                    <label id="label-event-remind-2"></label>
                                 </td>
-                                <td style="width: 39%;">
+                                <td style="width: 40%;">
                                     <div class="new-select-style-reminder">
-                                        <select name="erem2combo" id="erem2combo">
+                                        <select name="combo-event-remind-2" id="combo-event-remind-2">
                                         </select>
                                     </div>
                                 </td>
-                                <td style="text-align:center;">
-                                    <a href = "#" id="erem2close">
-                                        X
+                                <td style="text-align:center;font-size : large">
+                                    <a href = "#" id="div-event-remind-2-close">
+                                        &times;
                                     </a>
                                 </td>
                             </tr>
                         </table>
                     </div>
-                    <div id="Rem3" style="display:none;">
+                    <div id="div-event-remind-3" style="display:none;">
                         <table cellpadding=1 width=97%>
                             <tr>
-                                <td style="width: 60%; text-align:left;">
-                                    <label id="erem3label"></label>
+                                <td style="width: 50%; text-align:left;">
+                                    <label id="label-event-remind-3"></label>
                                 </td>
-                                <td style="width: 39%;">
+                                <td style="width: 40%;">
                                     <div class="new-select-style-reminder">
-                                        <select name="erem3combo" id="erem3combo">
+                                        <select name="combo-event-remind-3" id="combo-event-remind-3">
                                         </select>
                                     </div>
                                 </td>
-                                <td style="text-align:center;">
-                                    <a href = "#" id="erem3close">
-                                        X
+                                <td style="text-align:center;font-size : large">
+                                    <a href = "#" id="div-event-remind-3-close">
+                                        &times;
                                     </a>
                                 </td>
                             </tr>
                         </table>
                     </div>
-                    <div id="Rem4" style="display:none;">
+                    <div id="div-event-remind-4" style="display:none;">
                         <table cellpadding=1 width=97%>
                             <tr>
-                                <td style="width: 60%; text-align:left;">
-                                    <label id="erem4label"></label>
+                                <td style="width: 50%; text-align:left;">
+                                    <label id="label-event-remind-4"></label>
                                 </td>
-                                <td style="width: 39%;">
+                                <td style="width: 40%;">
                                     <div class="new-select-style-reminder">
-                                        <select name="erem4combo" id="erem4combo">
+                                        <select name="combo-event-remind-4" id="combo-event-remind-4">
                                         </select>
                                     </div>
                                 </td>
-                                <td style="text-align:center;">
-                                    <a href = "#" id="erem4close">
-                                        X
+                                <td style="text-align:center;font-size : large">
+                                    <a href = "#" id="div-event-remind-4-close">
+                                       &times;
                                     </a>
                                 </td>
                             </tr>
                         </table>
                     </div>
-                    <div id="Rem5" style="display:none;">
+                    <div id="div-event-remind-5" style="display:none;">
                         <table cellpadding=1 width=97%>
                             <tr>
-                                <td style="width: 60%; text-align:left;">
-                                    <label id="erem5label"></label>
+                                <td style="width: 50%; text-align:left;">
+                                    <label id="label-event-remind-5"></label>
                                 </td>
-                                <td style="width: 39%;">
+                                <td style="width: 40%;">
                                     <div class="new-select-style-reminder">
-                                        <select name="erem5combo" id="erem5combo">
+                                        <select name="combo-event-remind-5" id="combo-event-remind-5">
                                         </select>
                                     </div>
                                 </td>
-                                <td style="text-align:center;">
-                                    <a href = "#" id="erem5close">
-                                        X
+                                <td style="text-align:center;font-size : large;">
+                                    <a href = "#" id="div-event-remind-5-close">
+                                        &times;
                                     </a>
                                 </td>
                             </tr>
                         </table>
                     </div>
-                    <a href = "#" id="addRem">
+                    <a href = "#" id="href-add-remind">
                      </a>
 
-                    <input type="button" id="buttonaddevent" name="buttonaddevent"/>
+                    <input type="button" id="button-add-event" name="button-add-event"/>
         </div>
 
-        <div id="Three">
-            <div style="text-align:right"><label id="labelName">???</label>
-            <input type="button" id="buttonauth" name="buttonauth"/>
-            <input type="button" id="buttonrevoke" name="buttonrevoke"/>
+        <div id="page-sign-in">
+            <br><br>
+            <div style="text-align:right"><label id="label-account-name">???</label><br><br>
+            <input type="button"  id="button-sign-in" name="button-sign-in"/>
+
         </div>
     </div>
 
         <div style="text-align:right;vertical-align:bottom;">
-            <a href = "#" id="linkToCal">
+            <a href = "#" id="href-google-cal">
                 Google Calendar
             </a>
         </div>

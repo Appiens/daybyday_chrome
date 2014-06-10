@@ -25,7 +25,7 @@ function OAuth2(redirect_uri, client_id, scope) {
     this.state = getRandomString(15);
 
     // authorization request to get token
-    this.authRequest = "https://accounts.google.com/o/oauth2/auth?redirect_uri=" + this.redirect_uri  + "&response_type=token&client_id=" + this.client_id + "&scope=" + this.scope + "&state=" + this.state; /*&access_type=offline"*/;
+    this.authRequest = "https://accounts.google.com/o/oauth2/auth?redirect_uri=" + this.redirect_uri  + "&response_type=token&client_id=" + this.client_id + "&scope=" + this.scope + "&state=" + this.state + "&access_type=online";
 
     // для обращения к переменным класса из обработчиков событий
     var parent = this;
@@ -40,7 +40,30 @@ function OAuth2(redirect_uri, client_id, scope) {
         boolean useSelectAccount - check account
     */
     this.authorize = function(force, blindMode, useSelectAccount) {
-        parent.authorizeNew(force, blindMode, useSelectAccount);
+       // parent.authorizeNew(force, blindMode, useSelectAccount);
+
+        parent.isAutorizing = true;
+        chrome.identity.getAuthToken({'interactive': !blindMode},
+            function (access_token) {
+                parent.token = null;
+                parent.tokenExpiresIn = 0;
+                parent.tokenGetTime = 0;
+
+                if (chrome.runtime.lastError) {
+                    console.log(chrome.runtime.lastError);
+                    parent.isAutorizing = false;
+                    window.dispatchEvent(parent.authorizeEvent);
+                    return;
+                }
+
+                console.log(access_token);
+
+                parent.token = access_token;
+                parent.tokenExpiresIn = 3600;
+                parent.tokenGetTime = getCurrentTime();
+                parent.isAutorizing = false;
+                window.dispatchEvent(parent.authorizeEvent);
+            });
     }
 
     /*
@@ -103,7 +126,7 @@ function OAuth2(redirect_uri, client_id, scope) {
      */
     this.revoke = function(callback){
         if (!parent.isTokenOk()) {
-            console.Log('Revoke: token is bad or exprired');
+            console.log('Revoke: token is bad or exprired');
             return;
         }
 
@@ -149,30 +172,6 @@ function OAuth2(redirect_uri, client_id, scope) {
         }
     }
 
-  /*  this.onRevokeAuthDone = function(xhr) {
-        if (xhr.readyState != 4) {
-            return;
-        }
-
-        if (xhr.status != ST_REQUEST_OK) {
-            try {
-                var text = this.response;
-                var obj = JSON.parse(text);
-                var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
-                alert(error);
-            }
-            catch (e) {
-                console.log('ex: ' + e);
-            }
-        }
-        else {
-            parent.token = null;
-            parent.tokenExpiresIn = 0;
-            parent.tokenGetTime = 0;
-        //    callback();
-        }
-    }*/
-
     /*callback function for an authorizeEvent event, sends savedRequest*/
     this.onAutorized = function() {
         if (parent.savedRequest != null)
@@ -190,6 +189,16 @@ function OAuth2(redirect_uri, client_id, scope) {
         parent.savedRequestBody = null;
     }
 
+    this.SignInChanged = function( account, signedIn) {
+        console.log("Sign in changed " + account + ' ' + signedIn);
+        if (signedIn) {
+            parent.authorize(true, false, false);
+        }
+        else {
+            parent.revoke(function() {});
+        }
+    }
+
     // fires when authorization is completed
     this.authorizeEvent = new CustomEvent("Authorize");
 };
@@ -197,7 +206,9 @@ function OAuth2(redirect_uri, client_id, scope) {
 // inits oauth
 OAuth2.prototype.init = function() {
     window.addEventListener('Authorize', this.onAutorized, false);
+    chrome.identity.onSignInChanged.addListener(this.SignInChanged);
 }
+
 
 // returns true if token is ok (that means that connection is ok and we can make requests)
 OAuth2.prototype.isTokenOk = function() {
@@ -233,10 +244,11 @@ OAuth2.prototype.setSignedRequest = function(request, body, blindMode) {
  boolean blindMode = false authorization window will be shown anyway
  */
 OAuth2.prototype.setSignedRequestSpec = function(request, body) {
-    if (this.savedRequest != null)
+
+ /*   if (this.savedRequest != null)
     {
         return;
-    }
+    }*/
 
     // saving request
     this.savedRequest = request;

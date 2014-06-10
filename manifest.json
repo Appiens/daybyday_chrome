@@ -8,13 +8,22 @@
         "page": "views/background.html"
     },
     "permissions": [
-        "identity", "tabs", "http://*.google.com/", "https://*.google.com/", "https://accounts.google.com/*", "https://www.googleapis.com/*"
+        "identity", "http://*.google.com/", "https://*.google.com/", "https://accounts.google.com/*", "https://www.googleapis.com/*"
     ],
     "browser_action": {
         "default_title": "__MSG_title__"
     },
     "icons": {
-        "128": "images/icon-128.gif"
+        "128": "images/daybyday128.png"
+    },
+
+    "oauth2": {
+        "client_id": "783125393148-bs5huplrijmp5s9v3115evcj38c7shio.apps.googleusercontent.com",
+        "scopes": [
+            "https://www.googleapis.com/auth/calendar",
+            "https://www.googleapis.com/auth/tasks",
+            "https://www.googleapis.com/auth/userinfo.profile"
+        ]
     },
 
     "manifest_version": 2
