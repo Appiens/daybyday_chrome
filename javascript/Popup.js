@@ -1,17 +1,24 @@
 /**
  * Created by AstafyevaLA on 29.04.2014.
  */
+
+// rem div prefix
 var remDivName = "div-event-remind-";
 
+// repetititon periods array
 var repetitionPeriods =
     [ "repetition_interval_everyday$DIALY",
       "repetition_interval_everyweek$WEEKLY",
       "repetition_interval_everymonth$MONTHLY",
       "repetition_interval_everyyear$YEARLY"];
 
+// repetition periods local array
 var repetitionPeriodsLocale;
+
+// reminder periods local array
 var reminderPeriodsLocale;
 
+// reminder periods local array
 var reminderPeriods =
     [
         "reminder_1_minute$1",
@@ -49,16 +56,16 @@ var reminderPeriods =
         "reminder_4_weeks$40320"
     ];
 
-// сообщение о загрузке
+// loading message
 var MSG_LOADING;
 
-// сообщение об ошибке
+// error message
 var MSG_ERROR;
 
-// сообщение об успехе (при добавлении мероприятия или задачи)
+// success message (after adding task or event)
 var MSG_SUCCESS;
 
-// сообщение об отсутствии авторизации Google
+// no authorization message
 var MSG_UNAUTHORIZED;
 
 // available window states
@@ -69,11 +76,13 @@ var ST_DISCONNECTED = 3; // no connection
 var ST_ERROR = 4; // some error occured
 var ST_SUCCESS = 5; // the action was completed successfully
 
-// current window state
+// current popup window state
 var currentState;
 
-// showing when no one is signed in
-var unknownUserName = "???";
+// available pages opened (for saving last opened page)
+var WIN_AUTH = 0;
+var WIN_TASK = 1;
+var WIN_EVENT = 2;
 
 // background page
 var backGround;
@@ -81,10 +90,18 @@ var backGround;
 // current user`s task lists
 var taskLists = null;
 
+// current user`s calendar lists
 var calendarLists = null;
+
+// last entered event date From (to correct date To after it changes)
+var previousDateFrom = null;
+
+// last entered event time From (to correct time To after it changes)
+var previousTimeFrom = null;
 
 window.addEventListener('load', init, false);
 
+// initialization
 function init() {
     backGround = chrome.extension.getBackgroundPage();
     backGround.LogMsg('!!! Popup init started');
@@ -99,10 +116,7 @@ function init() {
     else {
         changeState(ST_CONNECTING);
         if (backGround.oauthMine.isTokenOk()) {
-
-
             if (backGround.taskLists != [] && backGround.userName != null && backGround.calendarLists != []) {
-
                 backGround.LogMsg('Popup: taking old vals');
                 GetGoogleInfoFromBackGround();
             }
@@ -132,8 +146,9 @@ function init() {
 
     SetButtonAddTaskState();
     SetButtonAddEventState();
-};
+}
 
+// ask tasks lists and calendars from APIs
 function GetGoogleInfo(withAuth) {
     if (withAuth) {
        authAndGetTasks();
@@ -146,6 +161,7 @@ function GetGoogleInfo(withAuth) {
     getCalendars();
 }
 
+// taking task lists and calendars from background
 function GetGoogleInfoFromBackGround() {
     GetTaskLists(true);
     GetUserName(true);
@@ -153,6 +169,8 @@ function GetGoogleInfoFromBackGround() {
 }
 
 /* if error occured while adding task, this task is saved in the taskInProcess variable */
+/* this function restores this task in edit boxes*/
+/* if we don`t have task to restore, function sets input-task-date to current date + 1 hour */
 function RestoreTaskInProcess() {
     if (backGround.taskInProcess != null) {
         $('input-task-name').value = backGround.taskInProcess.name;
@@ -161,17 +179,20 @@ function RestoreTaskInProcess() {
         $('checkbox-no-date').checked = backGround.taskInProcess.date != null;
     }
     else {
-        $('input-task-date').value = CurrDateStr(new Date());
+        $('input-task-date').value = CurrDateStrOffset(new Date());
     }
-
-
 }
 
+/* if error occured while adding event, this event is saved in the eventInProcess variable */
+/* this function restores this event in edit boxes*/
+/* if we don`t have event to restore, function sets input-event-from, input-event-from-time, input-event-to, input-event-to-time to current date + 1 hour */
 function RestoreEventInProcess() {
     if (backGround.eventInProcess != null) {
         $('input-event-name').value = backGround.eventInProcess.name;
         $('input-event-from').value = backGround.eventInProcess.dateStart;
         $('input-event-to').value= backGround.eventInProcess.dateEnd;
+        $('input-event-from-time').value = backGround.eventInProcess.timeStart;
+        $('input-event-to-time').value= backGround.eventInProcess.timeEnd;
         $('input-event-comment').value = backGround.eventInProcess.description;
         $('checkbox-all-day').checked = backGround.eventInProcess.allDay;
         $('input-event-place').value = backGround.eventInProcess.place;
@@ -204,8 +225,43 @@ function RestoreEventInProcess() {
             }
         }
     }
+    else {
+        // default value
+        var today = new Date();
+        var todayHourLater = addHours(today, 1);
+        // default values current date next hour - current date next hour + one hour
+        $('input-event-from').value = CurrDateStrOffset(today);
+        $('input-event-from-time').value = CurrTimeStrOffset(today);
+        $('input-event-to').value = CurrDateStrOffset(todayHourLater);
+        $('input-event-to-time').value = CurrTimeStrOffset(todayHourLater);
+    }
+
+    previousDateFrom = $('input-event-from').value;
+    previousTimeFrom =  $('input-event-from-time').value;
 }
 
+/* restoring last selected tab that was saved in backGround.popupSettings.lastTab*/
+function RestoreLastSelectedTab(gotoDefault) {
+
+    if (backGround.popupSettings.lastTab == -1) {
+        gotoDefault();
+        return;
+    }
+
+    switch (backGround.popupSettings.lastTab) {
+        case WIN_AUTH:
+            GotoAuthTab();
+            break;
+        case WIN_EVENT:
+            GotoEventTab();
+            break;
+        case WIN_TASK:
+            GotoTaskTab();
+            break;
+    }
+}
+
+/* adding event listeners to inputs*/
 function AddEventHandlers() {
     // adding event handlers to tasks
     $('tab-add-task').addEventListener('click', GotoTaskTab);
@@ -217,9 +273,12 @@ function AddEventHandlers() {
     $('button-add-event').addEventListener('click', DoAddEvent);
     $('checkbox-repetition').addEventListener('change', OnRepeatCheckChanged);
     $('checkbox-no-date').addEventListener('change', OnNoDateCheckChanged);
-       // OnNoDateCheckChanged
+    $('checkbox-all-day').addEventListener('change', OnAllDayCheckChanged);
+
+    // OnNoDateCheckChanged
     // hrefs
     $('href-google-cal').addEventListener('click', OpenCalTab);
+    $('href-day-by-day').addEventListener('click', OpenDayByDayTab);
     $('href-add-remind').addEventListener('click', AddReminderDiv);
 
     var list=document.getElementsByTagName("a");
@@ -241,10 +300,16 @@ function AddEventHandlers() {
     $('combo-event-calendar').addEventListener('input', SetButtonAddEventState);
     $('input-event-from').addEventListener('input', SetButtonAddEventState);
     $('input-event-to').addEventListener('input', SetButtonAddEventState);
+    $('input-event-from-time').addEventListener('input', SetButtonAddEventState);
+    $('input-event-to-time').addEventListener('input', SetButtonAddEventState);
+
+    $('input-event-from').addEventListener('input', OnDateFromChanged);
+    $('input-event-from-time').addEventListener('input', OnTimeFromChanged);
 
     chrome.runtime.onMessage.addListener(OnGotMessage);
 }
 
+/* updating current window state*/
 function UpdateCurrentState() {
     switch (currentState) {
         case ST_START:
@@ -253,11 +318,8 @@ function UpdateCurrentState() {
             disableButton($('button-sign-in'));
             SetAllElemsVisibility('visible');
             $('label-user-message').style.display='none';
-            if ($('tab-sign-in').className = 'SelectedTab') {
-                GotoEventTab();
-            }
-
-            setTabsVisibility(true, true, true);
+            RestoreLastSelectedTab(GotoEventTab);
+            setTabsVisibility(false, true, true);
             break;
         case ST_CONNECTING:
             GotoAuthTab();
@@ -289,17 +351,29 @@ function UpdateCurrentState() {
     }
 }
 
+/* set Tabs visibility
+    bool authVisibility - show Authorization page if true, hide page otherwise,
+    bool addTaskVisibility - show Add task page if true, hide page otherwise
+    bool addEventVisibility - show Add event page if true, hide page otherwise
+*/
 function setTabsVisibility(authVisibility, addTaskVisibility, addEventVisibility) {
     $('tab-add-task').style.display = addTaskVisibility? '': 'none';
     $('tab-add-event').style.display = addEventVisibility? '': 'none';
     $('tab-sign-in').style.display = authVisibility? '': 'none';
 }
 
+/*
+    Showing message to a user with label-user-message
+    string message - message to show
+*/
 function ShowMessageToUser(message) {
     $('label-user-message').style.display='';
     $('label-user-message').innerHTML = message;
 }
 
+/*
+    Activates Add Task tab page
+*/
 function GotoTaskTab() {
     $('tab-add-task').className = 'SelectedTab';
     $('tab-add-event').className = 'Tab';
@@ -307,8 +381,12 @@ function GotoTaskTab() {
     $('page-add-task').style.display = 'block';
     $('page-add-event').style.display = 'none';
     $('page-sign-in').style.display = 'none';
+    backGround.popupSettings.lastTab = WIN_TASK;
 }
 
+/*
+ Activates Add event tab page
+ */
 function GotoEventTab() {
     $('tab-add-task').className = 'Tab';
     $('tab-add-event').className = 'SelectedTab';
@@ -316,8 +394,12 @@ function GotoEventTab() {
     $('page-add-task').style.display = 'none';
     $('page-add-event').style.display = 'block';
     $('page-sign-in').style.display = 'none';
+    backGround.popupSettings.lastTab = WIN_EVENT;
 }
 
+/*
+ Activates Authorization tab page
+ */
 function GotoAuthTab() {
     $('tab-add-task').className = 'Tab';
     $('tab-add-event').className = 'Tab';
@@ -327,10 +409,28 @@ function GotoAuthTab() {
     $('page-sign-in').style.display = 'block';
 }
 
+/*
+ Opens Google Calendar url
+*/
 function OpenCalTab() {
-    chrome.tabs.query({url: "https://www.google.com/calendar/*"}, function(tabs) {
+   OpenTab("https://www.google.com/calendar/render");
+}
+
+/*
+  Opens Day by Day free url
+ */
+function OpenDayByDayTab() {
+    OpenTab("https://play.google.com/store/apps/details?id=ru.infteh.organizer.trial");
+}
+
+/*
+    Opens url in chrome, if it wasn`t opened, activate if it was opened
+    string url - url to open
+*/
+function OpenTab(url) {
+    chrome.tabs.query({url: url}, function(tabs) {
         if (tabs == null || tabs[0] == null) {
-            chrome.tabs.create({url:"https://www.google.com/calendar/render"});
+            chrome.tabs.create({url:url});
             return;
         }
 
@@ -338,9 +438,13 @@ function OpenCalTab() {
     });
 }
 
+/*
+    Creates an array with reminder Periods selected in combos
+    returns array[string] of reminderPeriods
+*/
 function MakeReminderTimeArray() {
     var reminderTimeArray = [];
-    var remName = remDivName; //"Rem";
+    var remName = remDivName;
 
     for (var i=1; i<=5; i++) {
         var div = $(remName + i.toString());
@@ -352,6 +456,9 @@ function MakeReminderTimeArray() {
     return reminderTimeArray;
 }
 
+/*
+    Closing reminder section when X is clicked
+*/
 function CloseReminderDiv(e) {
     var remName = remDivName;//"Rem";
     var cnt = 0;
@@ -385,6 +492,9 @@ function CloseReminderDiv(e) {
 
 }
 
+/*
+    Adding reminder section when link "Add a reminder" clicked
+ */
 function AddReminderDiv() {
     var remName = remDivName; //"Rem";
     var cnt = 0;
@@ -441,6 +551,7 @@ function getName() {
     }
 }
 
+/*asking for calendars of an authorized user*/
 function getCalendars() {
     if (backGround.oauthMine.allowRequest()) {
         backGround.LogMsg('Popup: getCalendars');
@@ -451,6 +562,7 @@ function getCalendars() {
     }
 }
 
+/* Function that is called when we get message*/
 function OnGotMessage(request, sender, sendResponse) {
     if (!request.greeting) {
         return;
@@ -516,6 +628,7 @@ function OnGotMessage(request, sender, sendResponse) {
 
 }
 
+/*Gets calendars from background page, fill combo, select calendar "in process"*/
 function GetCalendarList(requestIsOk) {
     var index = -1;
     var x = $('combo-event-calendar');
@@ -558,6 +671,7 @@ function GetCalendarList(requestIsOk) {
 
 }
 
+/*Gets task lists from background page, fill combo, select task list "in process"*/
 function GetTaskLists(requestIsOk) {
     var index = -1;
     var x = $('combo-task-list');
@@ -598,7 +712,7 @@ function GetTaskLists(requestIsOk) {
     }*/
 }
 
-
+/*Gets user name from background page, fill label-account-name with it*/
 function GetUserName(requestIsOk) {
     backGround.LogMsg('Popup: GotUserName!');
 
@@ -611,10 +725,13 @@ function GetUserName(requestIsOk) {
         $('label-account-name').innerHTML = backGround.userName;
     }
     else {
-        $('label-account-name').innerHTML = unknownUserName;
+        $('label-account-name').innerHTML = MSG_UNAUTHORIZED;//unknownUserName;
     }
 }
 
+/*
+    Add task action
+*/
 function DoAddTask() {
 
     backGround.LogMsg('Popup: Add Task Called');
@@ -631,6 +748,9 @@ function DoAddTask() {
     backGround.AddTask(name, listName, date,  notes);
 }
 
+/*
+    Add event action
+ */
 function DoAddEvent() {
     backGround.LogMsg('Popup: Add Event Called');
 
@@ -642,6 +762,8 @@ function DoAddEvent() {
     var listName = $('combo-event-calendar').value;
     var dateStart = $('input-event-from').value;
     var dateEnd = $('input-event-to').value;
+    var timeStart = $('input-event-from-time').value;
+    var timeEnd = $('input-event-to-time').value;
     var description = $('input-event-comment').value;
     var allDay = $('checkbox-all-day').checked;
     var place = $('input-event-place').value;
@@ -650,23 +772,30 @@ function DoAddEvent() {
 
     var reminderTimeArray = MakeReminderTimeArray();
 
-    backGround.AddEvent(name, listName, dateStart, dateEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray);
+    backGround.AddEvent(name, listName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray);
 }
 
+/*
+    Authorization action
+*/
 function DoAuthorize() {
     backGround.LogMsg('Popup: Authorize called');
     changeState(ST_CONNECTING);
     GetGoogleInfo(true);
 }
 
+/*
+    Logout action
+*/
 function DoLogOut() {
     backGround.LogMsg('Popup: Revoke called');
-
-
  //   changeState(ST_CONNECTING);
     backGround.oauthMine.revoke(OnLoggedout);
 }
 
+/*
+    Logout callback
+ */
 function OnLoggedout() {
     if (backGround.oauthMine.token == null) {
         changeState(ST_DISCONNECTED);
@@ -676,18 +805,23 @@ function OnLoggedout() {
     }
 }
 
-// visibility = 'visible' || 'hidden'
+// Hides or shows all page elements
+// string visibility = 'visible' || 'hidden'
 function SetAllElemsVisibility(visibility) {
     $('page-add-task').style.visibility = visibility;
     $('page-add-event').style.visibility = visibility;
     $('page-sign-in').style.visibility = visibility;
+    $('href-google-cal').style.visibility = visibility;
+    $('href-day-by-day').style.visibility = visibility;
 }
 
+/* cuts off from arr[i] all text after TEXT_VALUE_SPLITTER and saves result to arr[i]*/
 function LocalizeComboOption(item, i, arr) {
     var temp = arr[i].substring(0, arr[i].indexOf(TEXT_VALUE_SPLITTER));
     arr[i] = chrome.i18n.getMessage(temp);
 }
 
+/*localize page to current language*/
 function LocalizePage() {
         // tabs
     $('href-sign-in').innerHTML =
@@ -761,20 +895,36 @@ function LocalizePage() {
     MSG_UNAUTHORIZED = chrome.i18n.getMessage('unauthorized_message');
 }
 
+/*
+    Returns reminder label name with number i
+    int i - reminder`s number
+*/
 function GetRemindLabelName(i) {
     return "label-event-remind-" + i.toString();
 }
 
+/*
+    Returns reminder combo name with number i
+    int i - reminder`s number
+*/
 function GetRemindComboName(i) {
     return "combo-event-remind-" + i.toString();
 }
 
+/*
+    Changes popup window state
+    int newState = ST_START || ST_CONNECTED || ST_CONNECTING || ST_DISCONNECTED || ST_ERROR || ST_SUCCESS
+*/
 function changeState(newState) {
     currentState = newState;
     backGround.LogMsg('Popup: Current state is ' + currentState);
     UpdateCurrentState();
 }
 
+/*
+    Returns index in taskLists array by task list id
+    string id - task list id
+*/
 function SearchTaskListIndexById(id) {
     for (var i = 0, cal; cal = taskLists[i]; i++)
     {
@@ -786,6 +936,10 @@ function SearchTaskListIndexById(id) {
     return -1;
 }
 
+/*
+    Returns index in calendarLists array by calendar id
+    string id - calendar id
+*/
 function SearchCalendarIndexById(id) {
     for (var i = 0, cal; cal = calendarLists[i]; i++)
     {
@@ -797,6 +951,9 @@ function SearchCalendarIndexById(id) {
     return -1;
 }
 
+/*
+    Enables button button-add-task if task fields are valid
+ */
 function SetButtonAddTaskState() {
     if (AreAllTaskfieldsValid()) {
         enableButton($('button-add-task'));
@@ -806,6 +963,9 @@ function SetButtonAddTaskState() {
     }
 }
 
+/*
+    Enables button button-add-event if event fields are valid
+ */
 function SetButtonAddEventState() {
     if (AreAllEventFieldsValid()) {
         enableButton($('button-add-event'));
@@ -815,6 +975,44 @@ function SetButtonAddEventState() {
     }
 }
 
+/*
+    DateFrom change event handler
+    When Date From is changed, date To should change to the same distance
+    Example: Date From 16.06.2014 Date To 18.06.2014
+    DateFrom Changes to 20.06.2014
+    Date To should be 22.06.2014
+*/
+function OnDateFromChanged() {
+    if (!previousDateFrom) {
+        return;
+    }
+
+    if ($('input-event-from').checkValidity()) {
+        var days = daydiff(previousDateFrom, $('input-event-from').value);
+        $('input-event-to').value = CurrDateStr(addDays($('input-event-to').value, days));
+        previousDateFrom = $('input-event-from').value;
+    }
+}
+
+/*
+    TimeFrom change event handler
+    When time from is changed time Time To should change to the same distance
+*/
+function OnTimeFromChanged() {
+    if (!previousTimeFrom) {
+        return;
+    }
+
+    if ($('input-event-from-time').checkValidity()) {
+        var minutes = timeDiff(previousTimeFrom, $('input-event-from-time').value);
+        $('input-event-to-time').value = CurrTimeStr(addMinutes($('input-event-to').value + ' ' + $('input-event-to-time').value + ":00", minutes));
+        previousTimeFrom = $('input-event-from-time').value;
+    }
+}
+
+/*
+    Returns true if all task fields are valid, false otherwise
+*/
 function AreAllTaskfieldsValid() {
     if  ($('input-task-name').checkValidity() && $('combo-task-list').checkValidity() /*&& $('input-task-date').checkValidity()*/) {
         return true;
@@ -824,8 +1022,16 @@ function AreAllTaskfieldsValid() {
     }
 }
 
+/*
+    Returns true if all event fields are valid, false otherwise
+ */
 function AreAllEventFieldsValid() {
-    if  ($('input-event-name').checkValidity() && $('input-event-from').checkValidity() && $('input-event-to').checkValidity() && $('combo-event-calendar').checkValidity()) {
+    if  ($('input-event-name').checkValidity() &&
+         $('input-event-from').checkValidity() &&
+         $('input-event-to').checkValidity() &&
+         $('combo-event-calendar').checkValidity() &&
+         $('input-event-from-time').checkValidity() &&
+         $('input-event-to-time').checkValidity()) {
         return true;
     }
     else {
@@ -833,6 +1039,10 @@ function AreAllEventFieldsValid() {
     }
 }
 
+/*
+    Repeat checkbox event handler
+    Shows combo-repetition-interval if checkbox is checked, hides otherwise
+ */
 function OnRepeatCheckChanged () {
     if ($('checkbox-repetition').checked) {
      //   $('erepeatinterval').style.display = '';
@@ -844,6 +1054,10 @@ function OnRepeatCheckChanged () {
     }
 }
 
+/*
+    No date checkbox event handler
+    Hides input-task-date if checkbox not checked, shows otherwise
+*/
 function OnNoDateCheckChanged() {
     if ($('checkbox-no-date').checked) {
         $('input-task-date').style.display = '';
@@ -851,6 +1065,21 @@ function OnNoDateCheckChanged() {
     else {
         $('input-task-date').style.display = 'none';
     }
+}
+
+/*
+    All Day checkbox event handler
+    Hides time inputs if checked, shows otherwise
+ */
+function OnAllDayCheckChanged() {
+   if ($('checkbox-all-day').checked) {
+       $('input-event-from-time').style.display = 'none';
+       $('input-event-to-time').style.display = 'none';
+   }
+   else {
+       $('input-event-from-time').style.display = '';
+       $('input-event-to-time').style.display = '';
+   }
 }
 
 

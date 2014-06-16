@@ -5,6 +5,9 @@
 // authorization module
 var oauthMine = new OAuth2(c_redirect_uri, c_client_id, c_scope);
 
+// popup win settings
+var popupSettings = new PopupSettings(-1, -1);
+
 // the task that now is processing, if we will have error it will be shown in popup
 var taskInProcess = null;
 
@@ -25,14 +28,16 @@ var currTokenOk = false;
 
 /* updating icon and popup page */
 function updateView() {
-    var isTokenOk = oauthMine.isTokenOk();
+    var isTokenOk = oauthMine.token != null; //oauthMine.isTokenOk();
 
     if (currTokenOk != isTokenOk) {
         if (isTokenOk) {
             chrome.browserAction.setIcon({ 'path' : '../images/daybyday16.png'});
+            chrome.browserAction.setPopup({popup : "views/Popup.html"});
         }
         else {
             chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
+            chrome.browserAction.setPopup({popup : ""});
             taskLists = [];
             calendarLists = [];
             userName = null;
@@ -286,7 +291,7 @@ function AddTask(name, taskListName, date, notes) {
    string recurrenceTypeValue - elem of repetitionPeriods, null if don`t need repetition
    array of string reminderTimeArray - elem of remindersPeriods, [] if don`t need reminders
  */
-function AddEvent(name, calendarName, dateStart, dateEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray) {
+function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray) {
     if (!oauthMine.allowRequest())
     {
         LogMsg('AddEvent: another request is processing');
@@ -295,7 +300,7 @@ function AddEvent(name, calendarName, dateStart, dateEnd, description, allDay, p
 
     var listId = getCalendarIdByName(calendarName);
 
-    eventInProcess = new EventCal(name, calendarName, listId, dateStart, dateEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray);
+    eventInProcess = new EventCal(name, calendarName, listId, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray);
 
     var timeZone = getTimeZoneByName(calendarName);
 
@@ -309,8 +314,11 @@ function AddEvent(name, calendarName, dateStart, dateEnd, description, allDay, p
         };
 
 
-        var start = allDay? GetDateOnly(dateStart) : dateStart + ':00' + GetTimeZoneOffsetStr();
-        var end = allDay?   GetDateOnly(dateStart): dateEnd + ':00' + GetTimeZoneOffsetStr();
+        var start = allDay? dateStart : dateStart + 'T' + timeStart  + GetTimeZoneOffsetStr(); //dateStart + ':00' + GetTimeZoneOffsetStr();
+        var end = allDay?  CurrDateStr(addDays(dateEnd, 1)): dateEnd + 'T' + timeEnd  + GetTimeZoneOffsetStr(); // dateEnd + ':00' + GetTimeZoneOffsetStr();
+
+        LogMsg(start);
+        LogMsg(end);
 
         description = filterSpecialChar(description);
         name = filterSpecialChar(name);
@@ -500,13 +508,13 @@ function LogMsg(message) {
     console.log(GetDateTimeStr() + ' ' + message);
 }
 
-
+/* Background page initialization*/
 function init () {
     updateView();
     oauthMine.init();
     window.setInterval(updateView, 1000);
-    chrome.browserAction.setPopup({popup : "views/Popup.html"});
     chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
+    chrome.browserAction.onClicked.addListener(/*AskForTasks*/ AuthAndAskForTaskLists);
     oauthMine.authorize(false, true, false);
 }
 

@@ -1,10 +1,13 @@
+/*
+#00CDCD
+#0099CC
+*/
+
 /* Общие элементы, обычное состояние */
 :invalid {
-    border: 1px solid red;
+    border: 1px solid #FF4444;
 }
-:valid {
-    border: 1px solid green;
-}
+
 
 body, html {
     width:100%;
@@ -22,12 +25,11 @@ form {
 
 /* описывает линию, которя отделяет вкладку и названия вкладок*/
 ul#Tabs {
-    /*font-family: Verdana, Arial;*/
     font-size: 12px;
     font-weight: bold;
     list-style-type: none;
     padding-bottom: 28px;
-    border-bottom: 1px solid #a2b6cb;
+    border-bottom: 1px solid #0099CC;
     margin-bottom: 12px;
 }
 
@@ -36,9 +38,10 @@ ul#Tabs {
     float: right;
     height: 25px;
     width: 30%;
-    background-color: #fafafa;/* #deedfb;*/
+    background-color: #fafafa;
     margin: 2px 0px 0px 5px;
-    border: 1px solid #a2b6cb;
+    border: 1px solid #0099CC;
+
 }
 
 #Tabs li.Tab a {
@@ -47,11 +50,12 @@ ul#Tabs {
     color: #666666;
     text-decoration: none;
     padding: 5px;
+    text-align: center;
 }
 
 #Tabs li.Tab a:hover {
-    background-color: #bfe0fe;
-    border-bottom: 1px solid #bfe0fe;
+    background-color: #33B5E5;
+    border-bottom: 1px solid #33B5E5;
 }
 
 /* Состояние: активная */
@@ -61,10 +65,10 @@ ul#Tabs {
     width: 30%;
     background-color: #fafafa;
     margin: 2px 0px 0px 5px;
-    border-top: 1px solid #a2b6cb;
-    border-right: 1px solid #a2b6cb;
+    border-top: 1px solid  #0099CC;
+    border-right: 1px solid  #0099CC;
     border-bottom: 1px solid #fafafa;
-    border-left: 1px solid #a2b6cb;
+    border-left: 1px solid  #0099CC;
 }
 
 #Tabs li.SelectedTab A {
@@ -74,6 +78,17 @@ ul#Tabs {
     text-decoration: none;
     padding: 5px;
     cursor: default;
+    text-align: center;
+}
+
+#div-remind a {
+    display: block;
+    color: #666666;
+    text-decoration: none;
+}
+
+#div-remind a:hover {
+    color:  #33B5E5;/*#468ccf;*/
 }
 
 #page-add-event a {
@@ -83,7 +98,8 @@ ul#Tabs {
 }
 
 #page-add-event a:hover {
-    color: #468ccf;
+    color:  #33B5E5;/*#468ccf;*/
+    text-decoration: underline;
 }
 
 input {
@@ -97,32 +113,13 @@ input {
     box-sizing:content-box;
 }
 
+
 input[type=button] {
-    -moz-box-shadow:inset 0px 1px 0px 0px #bee2f9;
-    -webkit-box-shadow:inset 0px 1px 0px 0px #bee2f9;
-    box-shadow:inset 0px 1px 0px 0px #bee2f9;
-    background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #bccfc6), color-stop(1, #468ccf) );
-    background:-moz-linear-gradient( center top, #bccfc6 5%, #468ccf 100% );
-    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#bccfc6', endColorstr='#468ccf');
-    background-color:#bccfc6;
-    -webkit-border-top-left-radius:0px;
-    -moz-border-radius-topleft:0px;
-    border-top-left-radius:0px;
-    -webkit-border-top-right-radius:0px;
-    -moz-border-radius-topright:0px;
-    border-top-right-radius:0px;
-    -webkit-border-bottom-right-radius:0px;
-    -moz-border-radius-bottomright:0px;
-    border-bottom-right-radius:0px;
-    -webkit-border-bottom-left-radius:0px;
-    -moz-border-radius-bottomleft:0px;
-    border-bottom-left-radius:0px;
+    background-color: #AFEEEE;
     text-indent:0px;
-    border:1px solid #3866a3;
+    border:1px solid #0099CC;
     display:inline-block;
     color:#14396a;
-    /*font-family:Times New Roman;*/
-    /*font-size:17px;*/
     font-weight:normal;
     font-style:normal;
     height:25px;
@@ -130,46 +127,21 @@ input[type=button] {
     width:95%;
     text-decoration:none;
     text-align:center;
-    text-shadow:1px 1px 0px #7cacde;
 }
 
 input[type=button]:hover {
-    background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #468ccf), color-stop(1, #bccfc6) );
-    background:-moz-linear-gradient( center top, #468ccf 5%, #bccfc6 100% );
-    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#468ccf', endColorstr='#bccfc6');
-    background-color:#468ccf;
+    background-color:#33B5E5;
 }
 input[type=button]:active {
-     position:relative;
-     top:1px;
- }
+    position:relative;
+    top:1px;
+}
 
 input[type=button]:disabled {
-    -moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
-    -webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
-    box-shadow:inset 0px 1px 0px 0px #ffffff;
-    background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #ededed), color-stop(1, #dfdfdf) );
-    background:-moz-linear-gradient( center top, #ededed 5%, #dfdfdf 100% );
-    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#ededed', endColorstr='#dfdfdf');
-    background-color:#ededed;
-    -webkit-border-top-left-radius:0px;
-    -moz-border-radius-topleft:0px;
-    border-top-left-radius:0px;
-    -webkit-border-top-right-radius:0px;
-    -moz-border-radius-topright:0px;
-    border-top-right-radius:0px;
-    -webkit-border-bottom-right-radius:0px;
-    -moz-border-radius-bottomright:0px;
-    border-bottom-right-radius:0px;
-    -webkit-border-bottom-left-radius:0px;
-    -moz-border-radius-bottomleft:0px;
-    border-bottom-left-radius:0px;
-    text-indent:0;
+    background-color: #dcdcdc;
     border:1px solid #dcdcdc;
     display:inline-block;
     color:#777777;
-    /*font-family:arial;*/
-    /*font-size:17px;*/
     font-weight:normal;
     font-style:normal;
     height:25px;
@@ -177,11 +149,14 @@ input[type=button]:disabled {
     width:95%;
     text-decoration:none;
     text-align:center;
-    text-shadow:1px 1px 0px #ffffff;
+    /*text-shadow:1px 1px 0px #ffffff;*/
     margin-bottom:10px;
 }
 
+
+
 .new-select-style-wpandyou select, textarea, input {
+     font-family: Arial;
      width:97%;
      min-height:20px;
      display:block;
@@ -203,9 +178,6 @@ input[type=button]:disabled {
 }
 
 .check-box-style input {
-    /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
-    /*border:2px solid #ccc;*/
-    /*font-size:20px;*/
     min-height:10px;
     display:inline;
     horizontal-align:right;
@@ -214,8 +186,5 @@ input[type=button]:disabled {
     margin-bottom:5px;
     margin-top:5px;
     outline: none;
-    /*    float: right;
-        margin-left:5px;
-        margin-right: 5px;*/
     initial:content-box;
 }

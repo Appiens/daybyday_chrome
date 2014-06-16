@@ -1,7 +1,8 @@
 {
-    "name":{"message":"Add task app"},
-    "title":{"message":"Appiens task adder"},
-    "description":{"message":"Adding new task to the task list."},
+    "name":{"message":"Day by Day"},
+    "title":{"message":"Add an event or a task"},
+    "description":{"message":"Free extension for quick event/task adding in Google Calendar"},
+    "shortname" : {"message": "Day By Day"},
     "optionsTitle":{"message":"Options"},
     "task_name_title": {"message": "Task"},
     "task_list_title": {"message": "List"},

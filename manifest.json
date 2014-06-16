@@ -1,30 +1,35 @@
 {
     "name": "__MSG_name__",
-    "description": "__MSG_description__",
-    "default_locale":"en",
-    "options_page": "views/options.html",
     "version": "1.3",
-    "background": {
-        "page": "views/background.html"
-    },
-    "permissions": [
-        "identity", "http://*.google.com/", "https://*.google.com/", "https://accounts.google.com/*", "https://www.googleapis.com/*"
-    ],
-    "browser_action": {
-        "default_title": "__MSG_title__"
-    },
-    "icons": {
-        "128": "images/daybyday128.png"
-    },
-
+    "manifest_version": 2,
+    "minimum_chrome_version": "29",
     "oauth2": {
-        "client_id": "783125393148-bs5huplrijmp5s9v3115evcj38c7shio.apps.googleusercontent.com",
+        "client_id": "492637198173-ujqnek31t540apbks9cao6tsvq30isjq.apps.googleusercontent.com",
         "scopes": [
             "https://www.googleapis.com/auth/calendar",
             "https://www.googleapis.com/auth/tasks",
             "https://www.googleapis.com/auth/userinfo.profile"
         ]
     },
+    "icons": {
+        "48": "images/daybyday48.png",
+        "128": "images/daybyday128.png"
+    },
+        "background": {
+            "page": "views/background.html"
+        },
 
-    "manifest_version": 2
+
+    "description": "__MSG_description__",
+    "short_name": "__MSG_shortname__",
+    "default_locale":"en",
+    "options_page": "views/options.html",
+
+
+    "permissions": [
+        "identity", "http://*.google.com/", "https://*.google.com/", "https://accounts.google.com/*", "https://www.googleapis.com/*"
+    ],
+    "browser_action": {
+        "default_title": "__MSG_title__"
+    }
 }

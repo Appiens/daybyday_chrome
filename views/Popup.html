@@ -57,11 +57,31 @@
                     <div class="new-select-style-wpandyou">
                         <input type="text" id="input-event-name" name="input-event-name" required>
                     </div>
-                        <label id="label-event-from" style="display:none;"></label>
-                        <input type="datetime-local" id="input-event-from" name="input-event-from" required>
-                        <label id="label-event-to" style="display:none;"></label>
-                        <input type="datetime-local" id="input-event-to" name="input-event-to" required>
-                    <table cellpadding=1 width=97%>
+                        <label id="label-event-from" ></label>
+                        <table cellpadding=1 width=100%>
+                        <tr>
+                            <td style="width: 49%; vertical-align:middle;" align="left">
+                                <input type="date" id="input-event-from" name="input-event-from" required>
+                            </td>
+                            <td style="width:2%"></td>
+                            <td style="vertical-align:middle;" align="right">
+                                <input type="time" id="input-event-from-time" name="input-event-from-time" required>
+                            </td>
+                         </tr>
+                         </table>
+                         <label id="label-event-to" ></label>
+                        <table cellpadding=1 width=100%>
+                        <tr>
+                             <td style="width:49%;vertical-align:middle;" align="left">
+                            <input type="date" id="input-event-to" name="input-event-to" required>
+                             </td>
+                            <td style="width:2%"></td>
+                             <td style="vertical-align:middle;" align="right">
+                                 <input type="time" id="input-event-to-time" name="input-event-to-time" required>
+                             </td>
+                        </tr>
+                        </table>
+                        <table cellpadding=1 width=97%>
                         <tr>
                             <td style="width: 10%; text-align:center; vertical-align:middle;">
                                 <div class="check-box-style">
@@ -100,9 +120,10 @@
                         </select>
                     </div>
 
+                    <div id="div-remind">
                     <label id="label-event-remind" style="display:none;"></label>
                     <div id="div-event-remind-1" style="display:none;">
-                        <table cellpadding=0 width=97%>
+                        <table cellpadding=0 width=100%>
                             <tr>
                                 <td style="width: 50%; text-align:left;">
                                     <label id="label-event-remind-1"></label>
@@ -122,7 +143,7 @@
                         </table>
                     </div>
                     <div id="div-event-remind-2" style="display:none;">
-                        <table cellpadding=1 width=97%>
+                        <table cellpadding=1 width=100%>
                             <tr>
                                 <td style="width: 50%; text-align:left;">
                                     <label id="label-event-remind-2"></label>
@@ -142,7 +163,7 @@
                         </table>
                     </div>
                     <div id="div-event-remind-3" style="display:none;">
-                        <table cellpadding=1 width=97%>
+                        <table cellpadding=1 width=100%>
                             <tr>
                                 <td style="width: 50%; text-align:left;">
                                     <label id="label-event-remind-3"></label>
@@ -162,7 +183,7 @@
                         </table>
                     </div>
                     <div id="div-event-remind-4" style="display:none;">
-                        <table cellpadding=1 width=97%>
+                        <table cellpadding=1 width=100%>
                             <tr>
                                 <td style="width: 50%; text-align:left;">
                                     <label id="label-event-remind-4"></label>
@@ -182,7 +203,7 @@
                         </table>
                     </div>
                     <div id="div-event-remind-5" style="display:none;">
-                        <table cellpadding=1 width=97%>
+                        <table cellpadding=1 width=100%>
                             <tr>
                                 <td style="width: 50%; text-align:left;">
                                     <label id="label-event-remind-5"></label>
@@ -201,6 +222,7 @@
                             </tr>
                         </table>
                     </div>
+                    </div>
                     <a href = "#" id="href-add-remind">
                      </a>
 
@@ -215,11 +237,18 @@
         </div>
     </div>
 
-        <div style="text-align:right;vertical-align:bottom;">
-            <a href = "#" id="href-google-cal">
-                Google Calendar
-            </a>
-        </div>
+
+        <table cellpadding=1 width=100% style="vertical-align: bottom">
+            <tr>
+                <td style="width: 50%; text-align:left;">
+                    <a href = "#" id="href-google-cal">Google Calendar</a><br>
+                </td>
+                <td style="width: 50%; text-align:right">
+                    <a href="#" id="href-day-by-day">Day by Day</a>
+                </td>
+
+            </tr>
+        </table>
 </form>
 </body>
 </html>

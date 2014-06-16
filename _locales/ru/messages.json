@@ -1,7 +1,8 @@
 {
-    "name":{"message":"Добавление задач"},
-    "title":{"message":"Appiens Добавление задач"},
-    "description":{"message":"Добавление задачи в список задач."},
+    "name":{"message":"День за днём"},
+    "title":{"message":"Добавить мероприятие или задачу"},
+    "description":{"message":"Бесплатное расширение для быстрого добавления мероприятий или задач в Google Календарь"},
+    "shortname" : {"message": "День за днём"},
     "optionsTitle":{"message":"Настройки"},
     "task_name_title":{"message": "Заголовок"},
     "task_list_title":{"message": "Список задач"},
