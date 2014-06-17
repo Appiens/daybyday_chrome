@@ -1,0 +1,35 @@
+{
+    "name": "__MSG_namecrx__",
+    "version": "1.4",
+    "manifest_version": 2,
+    "minimum_chrome_version": "29",
+    "oauth2": {
+        "client_id": "783125393148-bs5huplrijmp5s9v3115evcj38c7shio.apps.googleusercontent.com", /* client id here is for generating CRX*/
+        "scopes": [
+            "https://www.googleapis.com/auth/calendar",
+            "https://www.googleapis.com/auth/tasks",
+            "https://www.googleapis.com/auth/userinfo.profile"
+        ]
+    },
+    "icons": {
+        "48": "images/daybyday48.png",
+        "128": "images/daybyday128.png"
+    },
+    "background": {
+        "page": "views/background.html"
+    },
+
+    "description": "__MSG_descriptioncrx__",
+    "short_name": "__MSG_shortnamecrx__",
+    "default_locale":"en",
+    "options_page": "views/options.html",
+
+
+    "permissions": [
+        "identity", "http://*.google.com/", "https://*.google.com/", "https://accounts.google.com/*", "https://www.googleapis.com/*"
+    ],
+    "browser_action": {
+        "default_title": "__MSG_titlecrx__"
+    },
+    "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'"
+}
