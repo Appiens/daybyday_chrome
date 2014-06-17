@@ -147,12 +147,12 @@ function filterSpecialChar(data) {
     prints char codes of all symbols in string
     string data - string to print
  */
-function printCharCodes(data) {
+/*function printCharCodes(data) {
     console.log("Printing char codes of " + data);
     for (var i = 0; i < data.length; i++) {
         console.log(data.charCodeAt(i));
     }
-}
+}*/
 
 /* make button disabled
   Button (getElementById) button*/

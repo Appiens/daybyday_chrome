@@ -26,6 +26,9 @@ var userName = null;
 // current token ok
 var currTokenOk = false;
 
+// google analytics
+var _gaq;
+
 /* updating icon and popup page */
 function updateView() {
     var isTokenOk = oauthMine.token != null; //oauthMine.isTokenOk();
@@ -240,6 +243,8 @@ function getTimeZoneByName(calendarName) {
    string notes - comment to task
  */
 function AddTask(name, taskListName, date, notes) {
+    trackEvent('Добавление задачи', '');
+
     if (!oauthMine.allowRequest())
     {
         LogMsg('AddTask: another request is processing');
@@ -292,6 +297,8 @@ function AddTask(name, taskListName, date, notes) {
    array of string reminderTimeArray - elem of remindersPeriods, [] if don`t need reminders
  */
 function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray) {
+    trackEvent('Добавление мероприятия', '');
+
     if (!oauthMine.allowRequest())
     {
         LogMsg('AddEvent: another request is processing');
@@ -455,7 +462,7 @@ function AskForCalendars(blindMode) {
 /* Ask for task lists with select Google account*/
 /* the result is put to calendar lists*/
 function AuthAndAskForTaskLists() {
-
+    trackEvent('Запуск расширения', '');
     var xhr = new XMLHttpRequest();
     try
     {
@@ -516,8 +523,32 @@ function init () {
     chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
     chrome.browserAction.onClicked.addListener(/*AskForTasks*/ AuthAndAskForTaskLists);
     oauthMine.authorize(false, true, false);
+
+    _gaq = _gaq || [];
+    _gaq.push(['_setAccount', c_analytics_code]);
+
+
+    (function() {
+        var ga = document.createElement('script');
+        ga.type = 'text/javascript';
+        ga.async = true;
+        ga.src = 'https://ssl.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(ga, s);
+    })();
 }
 
 window.addEventListener('load', init, false);
 
+window.onerror = function(message, file, line) {
+    _gaq.push(['_trackEvent', "Global", "Exception", file + "(" + line + "): " + message])
+}
+
+function trackEvent(name, params) {
+    _gaq.push(['_trackEvent', name, 'clicked']);
+}
+
+function trackPageView() {
+    _gaq.push(['_trackPageview']);
+}
 

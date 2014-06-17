@@ -104,6 +104,7 @@ window.addEventListener('load', init, false);
 // initialization
 function init() {
     backGround = chrome.extension.getBackgroundPage();
+    //backGround.trackPageView();
     backGround.LogMsg('!!! Popup init started');
     changeState(ST_START);
     AddEventHandlers();

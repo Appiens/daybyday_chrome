@@ -50,13 +50,11 @@ function OAuth2(redirect_uri, client_id, scope) {
                 parent.tokenGetTime = 0;
 
                 if (chrome.runtime.lastError) {
-                    console.log(chrome.runtime.lastError);
+                    LogMsg(chrome.runtime.lastError);
                     parent.isAutorizing = false;
                     window.dispatchEvent(parent.authorizeEvent);
                     return;
                 }
-
-                console.log(access_token);
 
                 parent.token = access_token;
                 parent.tokenExpiresIn = 3600;
@@ -100,13 +98,13 @@ function OAuth2(redirect_uri, client_id, scope) {
                     var stateFromRedirect = parseValue(redirect_url, 'state=', '&');
 
                     if (stateFromRedirect != parent.state) {
-                        console.log("The states are different: " + parent.state + " " + stateFromRedirect);
+                        LogMsg("The states are different: " + parent.state + " " + stateFromRedirect);
                         return;
                     }
                 }
 
                 if (chrome.runtime.lastError) {
-                    console.log("authorizeError " + chrome.runtime.lastError.message);
+                    LogMsg("authorizeError " + chrome.runtime.lastError.message);
                     parent.isAutorizing = false;
                     window.dispatchEvent(parent.authorizeEvent);
                     return;
@@ -126,14 +124,14 @@ function OAuth2(redirect_uri, client_id, scope) {
      */
     this.revoke = function(callback){
         if (!parent.isTokenOk()) {
-            console.log('Revoke: token is bad or exprired');
+            LogMsg('Revoke: token is bad or exprired');
             return;
         }
 
         chrome.identity.removeCachedAuthToken({ token:  parent.token},
             function() {
                 if (chrome.runtime.lastError) {
-                    console.log("revokeError " + chrome.runtime.lastError.message);
+                    LogMsg("revokeError " + chrome.runtime.lastError.message);
                     callback();
                     return;
                 }
@@ -142,7 +140,7 @@ function OAuth2(redirect_uri, client_id, scope) {
                  parent.tokenExpiresIn = 0;
                  parent.tokenGetTime = 0;
 
-                console.log("revoke ok");
+                LogMsg("revoke ok");
                 callback();
             });
     }
@@ -153,7 +151,7 @@ function OAuth2(redirect_uri, client_id, scope) {
      */
     this.revokeAuth = function() {
         if (parent.token == null)  {
-            console.Log('RevokeAuth: token is bad or exprired');
+            LogMsg('RevokeAuth: token is bad or exprired');
             return;
         }
 
@@ -168,7 +166,7 @@ function OAuth2(redirect_uri, client_id, scope) {
             xhr.send();
         }
         catch (e) {
-            console.log('ex: ' + e);
+            LogMsg('ex: ' + e);
         }
     }
 
@@ -190,7 +188,7 @@ function OAuth2(redirect_uri, client_id, scope) {
     }
 
     this.SignInChanged = function( account, signedIn) {
-        console.log("Sign in changed " + account + ' ' + signedIn);
+        LogMsg("Sign in changed " + account + ' ' + signedIn);
         if (signedIn) {
             parent.authorize(true, false, false);
         }
@@ -283,4 +281,6 @@ function parseValue(sourceStr, begStr, endStr)
 function getCurrentTime() {
     return (new Date()).getTime();
 };
+
+
 
