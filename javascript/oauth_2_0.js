@@ -53,7 +53,7 @@ function OAuth2(redirect_uri, client_id, scope) {
                     LogMsg(chrome.runtime.lastError);
                     parent.isAutorizing = false;
                     window.dispatchEvent(parent.authorizeEvent);
-                    return;
+                    throw new Error(chrome.runtime.lastError);
                 }
 
                 parent.token = access_token;
@@ -167,6 +167,7 @@ function OAuth2(redirect_uri, client_id, scope) {
         }
         catch (e) {
             LogMsg('ex: ' + e);
+            throw e;
         }
     }
 

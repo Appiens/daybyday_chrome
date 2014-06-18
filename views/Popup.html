@@ -43,7 +43,7 @@
                     </td>
                 </tr>
             </table>
-                    <input type="date" id="input-task-date" name="input-task-date"/>
+                    <input type="date" id="input-task-date" name="input-task-date" required>
                     <label id="label-task-comment" style="display:none;"></label>
                     <div class="new-select-style-wpandyou">
                         <textarea name="input-task-comment" id="input-task-comment"  rows="2"></textarea>
@@ -241,10 +241,12 @@
         <table cellpadding=1 width=100% style="vertical-align: bottom">
             <tr>
                 <td style="width: 50%; text-align:left;">
-                    <a href = "#" id="href-google-cal">Google Calendar</a><br>
+                    <a href = "#" id="href-google-cal">Google Calendar</a>
                 </td>
                 <td style="width: 50%; text-align:right">
-                    <a href="#" id="href-day-by-day">Day by Day</a>
+                    <a href="#" id="href-day-by-day">
+                        <div id="href-day-by-day-big">Day by Day</div><div style="font-size: xx-small" id="href-day-by-day-small">Android app</div>
+                    </a>
                 </td>
 
             </tr>

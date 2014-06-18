@@ -414,6 +414,7 @@ function GotoAuthTab() {
  Opens Google Calendar url
 */
 function OpenCalTab() {
+   backGround.trackEvent('Google calendar link', 'clicked');
    OpenTab("https://www.google.com/calendar/render");
 }
 
@@ -421,6 +422,7 @@ function OpenCalTab() {
   Opens Day by Day free url
  */
 function OpenDayByDayTab() {
+    backGround.trackEvent('Day by day link', 'clicked');
     OpenTab("https://play.google.com/store/apps/details?id=ru.infteh.organizer.trial");
 }
 
@@ -461,7 +463,7 @@ function MakeReminderTimeArray() {
     Closing reminder section when X is clicked
 */
 function CloseReminderDiv(e) {
-    var remName = remDivName;//"Rem";
+    var remName = remDivName;
     var cnt = 0;
     var targ;
 
@@ -573,12 +575,12 @@ function OnGotMessage(request, sender, sendResponse) {
 
     if (request.greeting == "taskListReady") {
 
-        backGround.LogMsg("taskListReady cancelled = " + request.authCancelled);
+        backGround.LogMsg("taskListReady");
 
-        if (request.authCancelled) {
+    /*    if (request.authCancelled) {
             changeState(ST_DISCONNECTED);
             return;
-        }
+        }*/
 
          GetTaskLists(request.isOk);
 
@@ -586,32 +588,32 @@ function OnGotMessage(request, sender, sendResponse) {
     }
 
     if (request.greeting == "calendarListReady") {
-        backGround.LogMsg("calendarListReady cancelled = " + request.authCancelled);
+        backGround.LogMsg("calendarListReady");
 
         if (currentState == ST_DISCONNECTED) {
             return;
         }
 
-        if (request.authCancelled) {
+      /*  if (request.authCancelled) {
             changeState(ST_DISCONNECTED);
             return;
-        }
+        }*/
 
         GetCalendarList(request.isOk);
         return;
     }
 
     if (request.greeting == "userNameReady") {
-        backGround.LogMsg("userNameReady cancelled = " + request.authCancelled);
+        backGround.LogMsg("userNameReady");
 
         if (currentState == ST_DISCONNECTED) {
             return;
         }
 
-        if (request.authCancelled) {
+   /*     if (request.authCancelled) {
             changeState(ST_DISCONNECTED);
             return;
-        }
+        }*/
 
         GetUserName(request.isOk);
         return;
@@ -736,6 +738,7 @@ function GetUserName(requestIsOk) {
 function DoAddTask() {
 
     backGround.LogMsg('Popup: Add Task Called');
+    backGround.trackEvent('Add a task', 'clicked');
 
     if (!AreAllTaskfieldsValid()) {
         return;
@@ -754,6 +757,7 @@ function DoAddTask() {
  */
 function DoAddEvent() {
     backGround.LogMsg('Popup: Add Event Called');
+    backGround.trackEvent('Add an event', 'clicked');
 
     if (!AreAllEventFieldsValid()) {
         return;
@@ -831,6 +835,14 @@ function LocalizePage() {
         chrome.i18n.getMessage('add_task_tab_title');
     $('href-add-event').innerHTML =
         chrome.i18n.getMessage('add_event_tab_title');
+
+    // hrefs
+    $('href-google-cal').innerHTML =
+        chrome.i18n.getMessage('calendar_link_title');
+    $('href-day-by-day-big').innerHTML =
+        chrome.i18n.getMessage('day_by_day_link_title_big');
+    $('href-day-by-day-small').innerHTML =
+        chrome.i18n.getMessage('day_by_day_link_title_small');
     
     // tasks
     $('input-task-name').placeholder =
@@ -1015,7 +1027,9 @@ function OnTimeFromChanged() {
     Returns true if all task fields are valid, false otherwise
 */
 function AreAllTaskfieldsValid() {
-    if  ($('input-task-name').checkValidity() && $('combo-task-list').checkValidity() /*&& $('input-task-date').checkValidity()*/) {
+    var taskDateIsValid = $('input-task-date').checkValidity() || !($('checkbox-no-date').checked);
+
+    if  ($('input-task-name').checkValidity() && $('combo-task-list').checkValidity() && taskDateIsValid) {
         return true;
     }
     else {
@@ -1066,6 +1080,8 @@ function OnNoDateCheckChanged() {
     else {
         $('input-task-date').style.display = 'none';
     }
+
+    SetButtonAddTaskState();
 }
 
 /*
@@ -1081,6 +1097,10 @@ function OnAllDayCheckChanged() {
        $('input-event-from-time').style.display = '';
        $('input-event-to-time').style.display = '';
    }
+}
+
+window.onerror = function(message, file, line) {
+    backGround._gaq.push(['_trackEvent', "Global", "Exception", file + "(" + line + "): " + message])
 }
 
 

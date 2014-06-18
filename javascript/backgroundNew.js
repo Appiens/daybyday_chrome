@@ -61,6 +61,8 @@ function onGotTaskLists(xhr) {
         }
 
         var isOk;
+        var exception = null;
+
         LogMsg('On Got TaskLists ' + xhr.readyState + ' ' + xhr.status);
 
         try {
@@ -73,11 +75,13 @@ function onGotTaskLists(xhr) {
             LogMsg('onGotTaskLists ex: ' + e);
             taskLists = [];
             isOk = false;
+            throw e;
         }
-
-        // sending a message to popup window
-        chrome.runtime.sendMessage({greeting: "taskListReady", isOk: isOk, authCancelled: oauthMine.userCancelledAuthorize});
-        updateView();
+        finally {
+            // sending a message to popup window
+            chrome.runtime.sendMessage({greeting: "taskListReady", isOk: isOk});
+            updateView();
+        }
     }
 }
 /* Callback function for AskForCalendars*/
@@ -101,11 +105,13 @@ function onGotCalendars(xhr) {
             LogMsg('onGotCalendars ex: ' + e);
             calendarLists = [];
             isOk = false;
+            throw e;
         }
-
-        // sending a message to popup window
-        chrome.runtime.sendMessage({greeting: "calendarListReady", isOk: isOk, authCancelled: oauthMine.userCancelledAuthorize});
-        updateView();
+        finally {
+            // sending a message to popup window
+            chrome.runtime.sendMessage({greeting: "calendarListReady", isOk: isOk});
+            updateView();
+        }
     }
 }
 
@@ -130,11 +136,13 @@ function onGotName(xhr) {
             LogMsg('ex: ' + e);
             userName = null;
             isOk = false;
+            throw e;
         }
-
-        // sending a message to popup window
-        chrome.runtime.sendMessage({greeting: "userNameReady", isOk: isOk, authCancelled: oauthMine.userCancelledAuthorize});
-        updateView();
+        finally {
+            // sending a message to popup window
+            chrome.runtime.sendMessage({greeting: "userNameReady", isOk: isOk});
+            updateView();
+        }
     }
 }
 
@@ -154,9 +162,11 @@ function onAddTask(xhr)
                 var obj = JSON.parse(text);
                 var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
                 chrome.runtime.sendMessage({greeting: "AddedError", error: error});
+                throw new Error(error);
             }
             catch (e) {
                 LogMsg('ex: ' + e);
+                throw e;
             }
         }
         else {
@@ -182,9 +192,11 @@ function onAddEvent(xhr)
                 var obj = JSON.parse(text);
                 var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
                 chrome.runtime.sendMessage({greeting: "AddedError", error: error});
+                throw new Error(error);
             }
             catch (e) {
                 LogMsg('ex: ' + e);
+                throw e;
             }
         }
         else {
@@ -243,12 +255,11 @@ function getTimeZoneByName(calendarName) {
    string notes - comment to task
  */
 function AddTask(name, taskListName, date, notes) {
-    trackEvent('Добавление задачи', '');
 
     if (!oauthMine.allowRequest())
     {
         LogMsg('AddTask: another request is processing');
-        return;
+        throw new Error('AddTask: another request is processing');
     }
 
     var listId = getTaskIdByName(taskListName);
@@ -262,6 +273,7 @@ function AddTask(name, taskListName, date, notes) {
         xhr.onerror = function(error)
         {
             LogMsg('AddTask: error: ' + error);
+            throw new Error(error);
         };
 
         if (date) {
@@ -281,6 +293,7 @@ function AddTask(name, taskListName, date, notes) {
     catch (e)
     {
         LogMsg('AddTask ex: ' + e);
+        throw e;
     }
 
 }
@@ -297,12 +310,12 @@ function AddTask(name, taskListName, date, notes) {
    array of string reminderTimeArray - elem of remindersPeriods, [] if don`t need reminders
  */
 function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray) {
-    trackEvent('Добавление мероприятия', '');
+
 
     if (!oauthMine.allowRequest())
     {
         LogMsg('AddEvent: another request is processing');
-        return;
+        throw new Error('AddEvent: another request is processing');
     }
 
     var listId = getCalendarIdByName(calendarName);
@@ -318,6 +331,7 @@ function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, de
         xhr.onerror = function(error)
         {
             LogMsg('AddEvent: error: ' + error);
+            throw new Error(error);
         };
 
 
@@ -343,6 +357,7 @@ function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, de
     catch (e)
     {
         LogMsg('AddEvent ex: ' + e);
+        throw e;
     }
 }
 
@@ -421,6 +436,7 @@ function AskForTaskLists(blindMode) {
         {
             LogMsg('AskForTaskLists: error: ' + error);
             updateView();
+            throw new Error(error);
         };
 
         url  = 'https://www.googleapis.com/tasks/v1/users/@me/lists';
@@ -431,6 +447,7 @@ function AskForTaskLists(blindMode) {
     {
         LogMsg('AskForTaskLists: ex: ' + e);
         updateView();
+        throw e;
     }
 }
 
@@ -446,6 +463,7 @@ function AskForCalendars(blindMode) {
         {
             LogMsg('AskForCalendars: error: ' + error);
             updateView();
+            throw new Error(error);
         };
 
         url  = 'https://www.googleapis.com/calendar/v3/users/me/calendarList';
@@ -456,13 +474,14 @@ function AskForCalendars(blindMode) {
     {
         LogMsg('AskForCalendars: ex: ' + e);
         updateView();
+        throw e;
     }
 }
 
 /* Ask for task lists with select Google account*/
 /* the result is put to calendar lists*/
 function AuthAndAskForTaskLists() {
-    trackEvent('Запуск расширения', '');
+    trackEvent('Extention button', 'clicked');
     var xhr = new XMLHttpRequest();
     try
     {
@@ -471,6 +490,7 @@ function AuthAndAskForTaskLists() {
         {
             LogMsg('AuthAndAskForTaskLists: error: ' + error);
             updateView();
+            throw new Error(error);
         };
 
         url  = 'https://www.googleapis.com/tasks/v1/users/@me/lists';
@@ -481,6 +501,7 @@ function AuthAndAskForTaskLists() {
     {
         LogMsg('AuthAndAskForTaskLists: ex: ' + e);
         updateView();
+        throw e;
     }
 }
 
@@ -496,6 +517,7 @@ function AskForName(blindMode) {
         {
             LogMsg('AskForName: error: ' + error);
             updateView();
+            throw new Error(error);
         };
 
         url  = 'https://www.googleapis.com/oauth2/v1/userinfo';
@@ -507,6 +529,7 @@ function AskForName(blindMode) {
     {
         LogMsg('AskForName: ex: ' + e);
         updateView();
+        throw e;
     }
 }
 
@@ -541,14 +564,24 @@ function init () {
 window.addEventListener('load', init, false);
 
 window.onerror = function(message, file, line) {
-    _gaq.push(['_trackEvent', "Global", "Exception", file + "(" + line + "): " + message])
+    try {
+        _gaq.push(['_trackEvent', "Global", "Exception", file + "(" + line + "): " + message])
+    }
+    catch (e) {
+        LogMsg('gaq push exception error' + e)
+    }
+
 }
 
 function trackEvent(name, params) {
-    _gaq.push(['_trackEvent', name, 'clicked']);
+    try {
+        _gaq.push(['_trackEvent', name, params]);
+    }
+    catch (e) {
+        LogMsg('gaq push event error '+  e);
+    }
+
 }
 
-function trackPageView() {
-    _gaq.push(['_trackPageview']);
-}
+
 
