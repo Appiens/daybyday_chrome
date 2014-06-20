@@ -77,5 +77,8 @@
     "reminder_1_week":{"message": "1 неделя"},
     "reminder_2_weeks":{"message": "2 недели"},
     "reminder_3_weeks":{"message": "3 недели"},
-    "reminder_4_weeks":{"message": "4 недели"}
+    "reminder_4_weeks":{"message": "4 недели"},
+    "reminder_popup": {"message": "Всплывающее окно"},
+    "reminder_sms": {"message": "СМС сообщение"},
+    "reminder_email": {"message": "Электронное письмо"}
 }

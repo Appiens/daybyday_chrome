@@ -8,12 +8,6 @@ var oauthMine = new OAuth2(c_redirect_uri, c_client_id, c_scope);
 // popup win settings
 var popupSettings = new PopupSettings(-1, -1);
 
-// the task that now is processing, if we will have error it will be shown in popup
-// var taskInProcess = null;
-
-// the event that now is processing
-//var eventInProcess = null;
-
 // task lists of a current user
 var taskLists = [];
 
@@ -44,8 +38,6 @@ function updateView() {
             taskLists = [];
             calendarLists = [];
             userName = null;
-        //    taskInProcess = null;
-        //    eventInProcess = null;
         }
     }
 
@@ -93,7 +85,6 @@ function onGotCalendars(xhr) {
         }
 
         var isOk;
-        // LogMsg('On Got Calendars ' + xhr.readyState + ' ' + xhr.status);
 
         try {
             var text = xhr.response;
@@ -264,8 +255,6 @@ function AddTask(name, taskListName, date, notes) {
 
     var listId = getTaskIdByName(taskListName);
 
-//    taskInProcess = new Task(name, listId, date, notes, taskListName);
-
     var xhr = new XMLHttpRequest();
     try
     {
@@ -307,9 +296,10 @@ function AddTask(name, taskListName, date, notes) {
    boolean allDay - is this an all day event,
    string place - place of an event,
    string recurrenceTypeValue - elem of repetitionPeriods, null if don`t need repetition
-   array of string reminderTimeArray - elem of remindersPeriods, [] if don`t need reminders
+   array of string reminderTimeArray - subArray of remindersPeriods, [] if don`t need reminders
+   array of string reminderMethodArray - subArray of remindersMethods, [] if don`t need reminders
  */
-function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray) {
+function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray) {
 
 
     if (!oauthMine.allowRequest())
@@ -319,8 +309,6 @@ function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, de
     }
 
     var listId = getCalendarIdByName(calendarName);
-
-    // eventInProcess = new EventCal(name, calendarName, listId, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray);
 
     var timeZone = getTimeZoneByName(calendarName);
 
@@ -336,12 +324,14 @@ function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, de
 
         var timeStartLong = timeStart;
 
+        // time should be in a long format HH:MM:SS
         if (timeStartLong.length == 5) {
             timeStartLong += ':00';
         }
 
         var timeEndLong = timeEnd;
 
+        // time should be in a long format HH:MM:SS
         if (timeEndLong.length == 5) {
             timeEndLong += ':00';
         }
@@ -357,12 +347,13 @@ function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, de
         place = filterSpecialChar(place);
         var recurrenceRule = BuildRecurrenceRule(recurrenceTypeValue);
         var reminderTimeArrayMins = BuildReminderTimeArrayMins(reminderTimeArray);
+        var reminderMethodArrayTypes = BuildReminderTimeArrayMins(reminderMethodArray);
 
         url  = 'https://www.googleapis.com/calendar/v3/calendars/' + listId + '/events';
 
         xhr.open('POST', url);
         xhr.setRequestHeader('Content-Type', 'application/json');
-        var params = CreateEventParams(start, end, allDay, description, name, place, recurrenceRule, timeZone, recurrenceRule != null , reminderTimeArrayMins);
+        var params = CreateEventParams(start, end, allDay, description, name, place, recurrenceRule, timeZone, recurrenceRule != null , reminderTimeArrayMins, reminderMethodArrayTypes);
         oauthMine.setSignedRequest(xhr, params, true);
     }
     catch (e)
@@ -384,8 +375,9 @@ function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, de
  string timeZone - time zone (used if all day event (Goodle requires) or addTimeZone flag is set)
  boolean addTimeZone - true if we want to add time zone to start and end dates
  array of string reminderTimeArrayMin - [5, 10, 60] remind before (in minutes), [] if don`t need reminders
+ array of string reminderMethodArrayTypes - [popup, sms, email] remind method, [] if don`t need reminders
  */
-function CreateEventParams(start, end, allDay, description, name, place, recurrenceRule, timeZone, addTimeZone, reminderTimeArrayMins) {
+function CreateEventParams(start, end, allDay, description, name, place, recurrenceRule, timeZone, addTimeZone, reminderTimeArrayMins, reminderMethodArrayTypes) {
     var params = '{';
 
     if (allDay) {
@@ -419,7 +411,7 @@ function CreateEventParams(start, end, allDay, description, name, place, recurre
         params += ',"reminders": { "useDefault": false, "overrides": [';
 
        for (var i = 0; i < reminderTimeArrayMins.length; i++) {
-           params +=  '{"method": "popup", "minutes": ' + reminderTimeArrayMins[i] + '}'
+           params +=  '{"method": "'+ reminderMethodArrayTypes[i] + '", "minutes": ' + reminderTimeArrayMins[i] + '}'
 
            if (i < reminderTimeArrayMins.length - 1) {
                params += ','
@@ -574,6 +566,7 @@ function init () {
 
 window.addEventListener('load', init, false);
 
+// all are sent to Google Analytics
 window.onerror = function(message, file, line) {
     try {
         _gaq.push(['_trackEvent', "Global", "Exception", file + "(" + line + "): " + message])
@@ -584,6 +577,9 @@ window.onerror = function(message, file, line) {
 
 }
 
+// send event to Google Analytics
+// string name - event name
+// string params - event params
 function trackEvent(name, params) {
     try {
         _gaq.push(['_trackEvent', name, params]);
@@ -591,7 +587,6 @@ function trackEvent(name, params) {
     catch (e) {
         LogMsg('gaq push event error '+  e);
     }
-
 }
 
 

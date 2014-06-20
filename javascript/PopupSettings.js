@@ -73,7 +73,7 @@ function PopupSettings(lastState, lastTab) {
     // creates and returns it otherwise
     this.GetSavedEvent = function() {
         if (eventInProcess == null) {
-            eventInProcess = new EventCal('', null, null, null, null, null, null, '', false, '', null, []);
+            eventInProcess = new EventCal('', null, null, null, null, null, null, '', false, '', null, [], []);
         }
 
         return eventInProcess;

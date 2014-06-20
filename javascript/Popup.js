@@ -18,7 +18,7 @@ var repetitionPeriodsLocale;
 // reminder periods local array
 var reminderPeriodsLocale;
 
-// reminder periods local array
+// reminder periods  array
 var reminderPeriods =
     [
         "reminder_1_minute$1",
@@ -54,6 +54,17 @@ var reminderPeriods =
         "reminder_2_weeks$20160",
         "reminder_3_weeks$30240",
         "reminder_4_weeks$40320"
+    ];
+
+// reminder methods array local
+var reminderMethodsLocale;
+
+// reminder methods array
+var reminderMethods =
+    [
+        "reminder_popup$popup",
+        "reminder_sms$sms",
+        "reminder_email$email"
     ];
 
 // loading message
@@ -99,6 +110,7 @@ var previousDateFrom = null;
 // last entered event time From (to correct time To after it changes)
 var previousTimeFrom = null;
 
+// maximum reminders number
 var REMINDER_MAX = 5;
 
 window.addEventListener('load', init, false);
@@ -113,6 +125,7 @@ function init() {
 
     LocalizePage();
 
+    // clearing saved task and event if keeping time is over
     if (backGround.popupSettings.CheckKeepingTimeOver()) {
         backGround.LogMsg('Keeping time is over');
         backGround.popupSettings.ClearSavedEvent();
@@ -147,6 +160,8 @@ function init() {
     for (var i=1; i<= REMINDER_MAX; i++) {
         var combo = $(GetRemindComboName(i));
         FillCombo(combo, reminderPeriodsLocale);
+        var comboMethods = $(GetRemindMethodComboName(i));
+        FillCombo(comboMethods, reminderMethodsLocale);
     }
 
     RestoreTaskInProcess();
@@ -160,6 +175,7 @@ function init() {
     AddEventHandlers();
 }
 
+// this event fires when popup closes
 window.onunload = function() {
     backGround.LogMsg("closed!");
 
@@ -187,6 +203,7 @@ window.onunload = function() {
          var recurrenceTypeIndex = $('checkbox-repetition').checked? $('combo-repetition-interval').selectedIndex : -1;
          eventInProcess.recurrenceTypeValue = recurrenceTypeIndex  > -1 ? repetitionPeriods[recurrenceTypeIndex] : null;
          eventInProcess.reminderTimeArray = MakeReminderTimeArray();
+         eventInProcess.reminderMethodArray = MakeReminderMethodArray();
     }
 
     backGround.popupSettings.SetStartKeepingTime();
@@ -212,9 +229,9 @@ function GetGoogleInfoFromBackGround() {
     GetCalendarList(true);
 }
 
-/* if error occured while adding task, this task is saved in the taskInProcess variable */
+/* when popup closes edited task is saved in the taskInProcess variable */
 /* this function restores this task in edit boxes*/
-/* if we don`t have task to restore, function sets input-task-date to current date + 1 hour */
+/* if we don`t have task to restore, function sets default values to task fields*/
 function RestoreTaskInProcess() {
     if (backGround.popupSettings.SavedTaskExists()) {
         var taskInProcess = backGround.popupSettings.GetSavedTask();
@@ -233,9 +250,9 @@ function RestoreTaskInProcess() {
     }
 }
 
-/* if error occured while adding event, this event is saved in the eventInProcess variable */
+/* when popup closes edited event is saved in the eventInProcess variable */
 /* this function restores this event in edit boxes*/
-/* if we don`t have event to restore, function sets input-event-from, input-event-from-time, input-event-to, input-event-to-time to current date + 1 hour */
+/* if we don`t have event to restore, function sets default values to event fields */
 function RestoreEventInProcess() {
     if (backGround.popupSettings.SavedEventExists()) {
         var eventInProcess = backGround.popupSettings.GetSavedEvent();
@@ -265,6 +282,8 @@ function RestoreEventInProcess() {
         if (eventInProcess.reminderTimeArray.length > 0) {
             for (var j=0; j< eventInProcess.reminderTimeArray.length; j++) {
                 AddReminderDiv();
+
+                // restoring reminder times
                 var selectedTime = eventInProcess.reminderTimeArray[j];
 
                 for (var i = 0; i < reminderPeriods.length; i++) {
@@ -274,6 +293,17 @@ function RestoreEventInProcess() {
                 }
 
                 $(GetRemindComboName(j+1)).selectedIndex = i;
+
+                var selectedMethod = eventInProcess.reminderMethodArray[j];
+
+                // restoring reminder methods
+                for (var i = 0; i < reminderMethods.length; i++) {
+                    if (reminderMethods[i] == selectedMethod) {
+                        break;
+                    }
+                }
+
+                $(GetRemindMethodComboName(j+1)).selectedIndex = i;
             }
         }
     }
@@ -536,6 +566,24 @@ function MakeReminderTimeArray() {
     }
 
     return reminderTimeArray;
+}
+
+/*
+*/
+
+function MakeReminderMethodArray() {
+    var reminderMethodArray = [];
+
+    var remName = remDivName;
+
+    for (var i=1; i<= REMINDER_MAX; i++) {
+        var div = $(remName + i.toString());
+        if (div.style.display == '') {
+            reminderMethodArray.push(reminderMethods[$(GetRemindMethodComboName(i)).selectedIndex]);
+        }
+    }
+
+    return reminderMethodArray;
 }
 
 /*
@@ -882,8 +930,9 @@ function DoAddEvent() {
     var recurrenceTypeValue = recurrenceTypeIndex  > -1 ? repetitionPeriods[recurrenceTypeIndex] : null;
 
     var reminderTimeArray = MakeReminderTimeArray();
+    var reminderMethodArray = MakeReminderMethodArray();
 
-    backGround.AddEvent(name, listName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray);
+    backGround.AddEvent(name, listName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray);
 }
 
 /*
@@ -968,8 +1017,10 @@ function LocalizePage() {
     // localized combo lists
     repetitionPeriodsLocale = repetitionPeriods.slice(0);
     reminderPeriodsLocale = reminderPeriods.slice(0);
+    reminderMethodsLocale = reminderMethods.slice(0);
     repetitionPeriodsLocale.forEach(LocalizeComboOption);
     reminderPeriodsLocale.forEach(LocalizeComboOption);
+    reminderMethodsLocale.forEach(LocalizeComboOption);
 
     // authorization
     $('button-sign-in').value =
@@ -1005,11 +1056,11 @@ function LocalizePage() {
     $('href-add-remind').innerHTML =
         chrome.i18n.getMessage('reminder_add_action_title');
 
-    for (var i=1; i<=REMINDER_MAX; i++) {
-        var label = $(GetRemindLabelName(i));
-        label.innerHTML =
-            chrome.i18n.getMessage('reminder_type');
-    }
+//    for (var i=1; i<=REMINDER_MAX; i++) {
+//        var label = $(GetRemindLabelName(i));
+//        label.innerHTML =
+//            chrome.i18n.getMessage('reminder_type');
+//    }
 
     // messages
     MSG_LOADING = chrome.i18n.getMessage('loading_message');
@@ -1040,6 +1091,10 @@ function GetRemindLabelName(i) {
 */
 function GetRemindComboName(i) {
     return "combo-event-remind-" + i.toString();
+}
+
+function GetRemindMethodComboName(i) {
+    return "combo-event-remind-method-" + i.toString();
 }
 
 /*

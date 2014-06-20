@@ -78,5 +78,8 @@
     "reminder_1_week": {"message": "1 week"},
     "reminder_2_weeks": {"message": "2 weeks"},
     "reminder_3_weeks": {"message": "3 weeks"},
-    "reminder_4_weeks": {"message": "4 weeks"}
+    "reminder_4_weeks": {"message": "4 weeks"},
+    "reminder_popup": {"message": "Pop-up"},
+    "reminder_sms": {"message": "SMS"},
+    "reminder_email": {"message": "Email"}
 }
