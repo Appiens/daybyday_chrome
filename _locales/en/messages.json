@@ -21,6 +21,8 @@
     "unauthorized_message": {"message": "Please, sign in!"},
     "add_task_action_title": {"message": "Save"},
     "add_event_action_title": {"message": "Save"},
+    "clear_task_action_title": {"message": "Clear"},
+    "clear_event_action_title": {"message": "Clear"},
     "add_task_tab_title": {"message": "Task"},
     "add_event_tab_title": {"message": "Event"},
     "authorize_tab_title": {"message": "Authorization"},

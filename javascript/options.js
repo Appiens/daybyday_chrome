@@ -19,7 +19,7 @@ function init() {
 
     $('buttonRevoke').value = chrome.i18n.getMessage('revoke_action_title');
     $('buttonRevokeText').innerHTML= chrome.i18n.getMessage('revoke_rights_action_title');
-    $('extensionName').innerHTML = chrome.i18n.getMessage('title');
+    $('extensionName').innerHTML = chrome.i18n.getMessage('name');
     document.querySelector('#buttonRevoke').addEventListener('click', revokeIt);
 
     window.setInterval(updateView, 3000);

@@ -7,7 +7,7 @@ var remDivName = "div-event-remind-";
 
 // repetititon periods array
 var repetitionPeriods =
-    [ "repetition_interval_everyday$DIALY",
+    [ "repetition_interval_everyday$DAILY",
       "repetition_interval_everyweek$WEEKLY",
       "repetition_interval_everymonth$MONTHLY",
       "repetition_interval_everyyear$YEARLY"];
@@ -99,7 +99,10 @@ var previousDateFrom = null;
 // last entered event time From (to correct time To after it changes)
 var previousTimeFrom = null;
 
+var REMINDER_MAX = 5;
+
 window.addEventListener('load', init, false);
+
 
 // initialization
 function init() {
@@ -107,8 +110,14 @@ function init() {
     //backGround.trackPageView();
     backGround.LogMsg('!!! Popup init started');
     changeState(ST_START);
-    AddEventHandlers();
+
     LocalizePage();
+
+    if (backGround.popupSettings.CheckKeepingTimeOver()) {
+        backGround.LogMsg('Keeping time is over');
+        backGround.popupSettings.ClearSavedEvent();
+        backGround.popupSettings.ClearSavedTask();
+    }
 
     // setting the current state
     if (backGround.oauthMine.token == null) {
@@ -135,7 +144,7 @@ function init() {
 
     //fill combos
     FillCombo($('combo-repetition-interval'), repetitionPeriodsLocale);
-    for (var i=1; i<=5; i++) {
+    for (var i=1; i<= REMINDER_MAX; i++) {
         var combo = $(GetRemindComboName(i));
         FillCombo(combo, reminderPeriodsLocale);
     }
@@ -143,10 +152,44 @@ function init() {
     RestoreTaskInProcess();
     RestoreEventInProcess();
 
-    OnRepeatCheckChanged ();
+    OnRepeatCheckChanged();
 
     SetButtonAddTaskState();
     SetButtonAddEventState();
+
+    AddEventHandlers();
+}
+
+window.onunload = function() {
+    backGround.LogMsg("closed!");
+
+    if (backGround.popupSettings.SavedTaskExists()) {
+          var taskInProcess = backGround.popupSettings.GetSavedTask();
+          taskInProcess.name = $('input-task-name').value;
+          taskInProcess.listName = $('combo-task-list').value;
+          taskInProcess.listId = backGround.getTaskIdByName(taskInProcess.listName);
+          taskInProcess.date =  $('checkbox-with-date').checked ? $('input-task-date').value : null;
+          taskInProcess.notes = $('input-task-comment').value;
+    }
+
+    if (backGround.popupSettings.SavedEventExists()) {
+         var eventInProcess = backGround.popupSettings.GetSavedEvent();
+         eventInProcess.name = $('input-event-name').value;
+         eventInProcess.listName = $('combo-event-calendar').value;
+         eventInProcess.listId = backGround.getCalendarIdByName(eventInProcess.listName);
+         eventInProcess.dateStart = $('input-event-from').value;
+         eventInProcess.dateEnd = $('input-event-to').value;
+         eventInProcess.timeStart = $('input-event-from-time').value;
+         eventInProcess.timeEnd = $('input-event-to-time').value;
+         eventInProcess.description = $('input-event-comment').value;
+         eventInProcess.allDay = $('checkbox-all-day').checked;
+         eventInProcess.place = $('input-event-place').value;
+         var recurrenceTypeIndex = $('checkbox-repetition').checked? $('combo-repetition-interval').selectedIndex : -1;
+         eventInProcess.recurrenceTypeValue = recurrenceTypeIndex  > -1 ? repetitionPeriods[recurrenceTypeIndex] : null;
+         eventInProcess.reminderTimeArray = MakeReminderTimeArray();
+    }
+
+    backGround.popupSettings.SetStartKeepingTime();
 }
 
 // ask tasks lists and calendars from APIs
@@ -173,14 +216,20 @@ function GetGoogleInfoFromBackGround() {
 /* this function restores this task in edit boxes*/
 /* if we don`t have task to restore, function sets input-task-date to current date + 1 hour */
 function RestoreTaskInProcess() {
-    if (backGround.taskInProcess != null) {
-        $('input-task-name').value = backGround.taskInProcess.name;
-        $('input-task-date').value = backGround.taskInProcess.date != null ? backGround.taskInProcess.date : CurrDateStr(new Date());
-        $('input-task-comment').value = backGround.taskInProcess.notes;
-        $('checkbox-no-date').checked = backGround.taskInProcess.date != null;
+    if (backGround.popupSettings.SavedTaskExists()) {
+        var taskInProcess = backGround.popupSettings.GetSavedTask();
+        $('input-task-name').value = taskInProcess.name;
+        $('input-task-date').value = taskInProcess.date != null ? taskInProcess.date : CurrDateStrOffset(new Date());
+        $('input-task-comment').value = taskInProcess.notes;
+        $('checkbox-with-date').checked = taskInProcess.date != null;
+        $('input-task-date').style.display = taskInProcess.date != null ? '': 'none';
     }
     else {
+        $('input-task-name').value = '';
         $('input-task-date').value = CurrDateStrOffset(new Date());
+        $('input-task-comment').value = '';
+        $('checkbox-with-date').checked = true;
+        $('input-task-date').style.display = '';
     }
 }
 
@@ -188,21 +237,23 @@ function RestoreTaskInProcess() {
 /* this function restores this event in edit boxes*/
 /* if we don`t have event to restore, function sets input-event-from, input-event-from-time, input-event-to, input-event-to-time to current date + 1 hour */
 function RestoreEventInProcess() {
-    if (backGround.eventInProcess != null) {
-        $('input-event-name').value = backGround.eventInProcess.name;
-        $('input-event-from').value = backGround.eventInProcess.dateStart;
-        $('input-event-to').value= backGround.eventInProcess.dateEnd;
-        $('input-event-from-time').value = backGround.eventInProcess.timeStart;
-        $('input-event-to-time').value= backGround.eventInProcess.timeEnd;
-        $('input-event-comment').value = backGround.eventInProcess.description;
-        $('checkbox-all-day').checked = backGround.eventInProcess.allDay;
-        $('input-event-place').value = backGround.eventInProcess.place;
-        $('checkbox-repetition').checked =  backGround.eventInProcess.recurrenceTypeValue != null;
+    if (backGround.popupSettings.SavedEventExists()) {
+        var eventInProcess = backGround.popupSettings.GetSavedEvent();
+        $('input-event-name').value = eventInProcess.name;
+        $('input-event-from').value = eventInProcess.dateStart;
+        $('input-event-to').value= eventInProcess.dateEnd;
+        $('input-event-from-time').value = eventInProcess.timeStart;
+        $('input-event-to-time').value= eventInProcess.timeEnd;
+        $('input-event-comment').value = eventInProcess.description;
+        $('checkbox-all-day').checked = eventInProcess.allDay;
+        $('input-event-place').value = eventInProcess.place;
+        $('checkbox-repetition').checked =  eventInProcess.recurrenceTypeValue != null;
+        $('combo-repetition-interval').style.display = eventInProcess.recurrenceTypeValue != null ? '' : 'none';
 
         // restoring repetition period
-        if (backGround.eventInProcess.recurrenceTypeValue != null) {
+        if (eventInProcess.recurrenceTypeValue != null) {
             for (var i = 0; i < repetitionPeriods.length; i++) {
-                if (repetitionPeriods[i] == backGround.eventInProcess.recurrenceTypeValue) {
+                if (repetitionPeriods[i] == eventInProcess.recurrenceTypeValue) {
                     break;
                 }
             }
@@ -211,12 +262,12 @@ function RestoreEventInProcess() {
         }
 
         // restoring reminders
-        if (backGround.eventInProcess.reminderTimeArray.length > 0) {
-            for (var j=0; j< backGround.eventInProcess.reminderTimeArray.length; j++) {
+        if (eventInProcess.reminderTimeArray.length > 0) {
+            for (var j=0; j< eventInProcess.reminderTimeArray.length; j++) {
                 AddReminderDiv();
-                var selectedTime = backGround.eventInProcess.reminderTimeArray[j];
+                var selectedTime = eventInProcess.reminderTimeArray[j];
 
-                for (var i = 0; i < backGround.eventInProcess.reminderTimeArray.length; i++) {
+                for (var i = 0; i < reminderPeriods.length; i++) {
                     if (reminderPeriods[i] == selectedTime) {
                         break;
                     }
@@ -231,10 +282,24 @@ function RestoreEventInProcess() {
         var today = new Date();
         var todayHourLater = addHours(today, 1);
         // default values current date next hour - current date next hour + one hour
+        $('input-event-name').value = '';
         $('input-event-from').value = CurrDateStrOffset(today);
         $('input-event-from-time').value = CurrTimeStrOffset(today);
         $('input-event-to').value = CurrDateStrOffset(todayHourLater);
         $('input-event-to-time').value = CurrTimeStrOffset(todayHourLater);
+        $('input-event-from-time').style.display = '';
+        $('input-event-to-time').style.display = '';
+        $('input-event-comment').value = '';
+        $('checkbox-all-day').checked = false;
+        $('input-event-place').value = '';
+        $('checkbox-repetition').checked = false;
+        $('href-add-remind').style.display = '';
+
+        $('label-event-remind').style.display = 'none';
+
+        for (var j=0; j< REMINDER_MAX; j++) {
+            $(GetRemindDivName(j + 1)).style.display = 'none';
+        }
     }
 
     previousDateFrom = $('input-event-from').value;
@@ -269,11 +334,15 @@ function AddEventHandlers() {
     $('tab-add-event').addEventListener('click', GotoEventTab);
     $('tab-sign-in').addEventListener('click', GotoAuthTab);
     $('button-add-task').addEventListener('click', DoAddTask);
+    $('button-clear-task').addEventListener('click', DoClearTask);
+
     $('button-sign-in').addEventListener('click', DoAuthorize);
 
     $('button-add-event').addEventListener('click', DoAddEvent);
+    $('button-clear-event').addEventListener('click', DoClearEvent);
+
     $('checkbox-repetition').addEventListener('change', OnRepeatCheckChanged);
-    $('checkbox-no-date').addEventListener('change', OnNoDateCheckChanged);
+
     $('checkbox-all-day').addEventListener('change', OnAllDayCheckChanged);
 
     // OnNoDateCheckChanged
@@ -292,17 +361,27 @@ function AddEventHandlers() {
     }
 
     // input to task fields
-    $('input-task-name').addEventListener('input', SetButtonAddTaskState);
-    $('combo-task-list').addEventListener('input', SetButtonAddTaskState);
-    $('input-task-date').addEventListener('input', SetButtonAddTaskState);
+    $('input-task-name').addEventListener('input', OnTaskFieldChanged);
+    $('combo-task-list').addEventListener('change', OnTaskFieldChanged);
+    $('input-task-date').addEventListener('input', OnTaskFieldChanged);
+    $('checkbox-with-date').addEventListener('change', OnNoDateCheckChanged);
+    $('input-task-comment').addEventListener('input', OnTaskFieldChanged);
 
        // input to event fields
-    $('input-event-name').addEventListener('input', SetButtonAddEventState);
-    $('combo-event-calendar').addEventListener('input', SetButtonAddEventState);
-    $('input-event-from').addEventListener('input', SetButtonAddEventState);
-    $('input-event-to').addEventListener('input', SetButtonAddEventState);
-    $('input-event-from-time').addEventListener('input', SetButtonAddEventState);
-    $('input-event-to-time').addEventListener('input', SetButtonAddEventState);
+    $('input-event-name').addEventListener('input', OnEventFieldChanged);
+    $('combo-event-calendar').addEventListener('input', OnEventFieldChanged);
+    $('input-event-from').addEventListener('input', OnEventFieldChanged);
+    $('input-event-to').addEventListener('input', OnEventFieldChanged);
+    $('input-event-from-time').addEventListener('input', OnEventFieldChanged);
+    $('input-event-to-time').addEventListener('input', OnEventFieldChanged);
+
+    $('input-event-comment').addEventListener('input', OnEventFieldChanged);
+    $('checkbox-all-day').addEventListener('change', OnEventFieldChanged);
+    $('input-event-place').addEventListener('input', OnEventFieldChanged);
+    $('checkbox-repetition').addEventListener('change', OnEventFieldChanged);
+    $('combo-event-calendar').addEventListener('change', OnEventFieldChanged);
+    $('href-add-remind').addEventListener('click', OnEventFieldChanged);
+
 
     $('input-event-from').addEventListener('input', OnDateFromChanged);
     $('input-event-from-time').addEventListener('input', OnTimeFromChanged);
@@ -449,7 +528,7 @@ function MakeReminderTimeArray() {
     var reminderTimeArray = [];
     var remName = remDivName;
 
-    for (var i=1; i<=5; i++) {
+    for (var i=1; i<= REMINDER_MAX; i++) {
         var div = $(remName + i.toString());
         if (div.style.display == '') {
             reminderTimeArray.push(reminderPeriods[$(GetRemindComboName(i)).selectedIndex]);
@@ -482,17 +561,16 @@ function CloseReminderDiv(e) {
         $('href-add-remind').style.display = '';
     }
 
-    for (var i=1; i<=5; i++) {
+    for (var i=1; i<= REMINDER_MAX; i++) {
         var div = $(remName + i.toString());
         if (div.style.display == 'none') {
            cnt++;
         }
     }
 
-    if (cnt == 5) {
+    if (cnt == REMINDER_MAX) {
         $('label-event-remind').style.display = 'none';
     }
-
 }
 
 /*
@@ -502,7 +580,7 @@ function AddReminderDiv() {
     var remName = remDivName; //"Rem";
     var cnt = 0;
 
-    for (var i=1; i<=5; i++) {
+    for (var i=1; i<=REMINDER_MAX; i++) {
         var div = $(remName + i.toString());
         if (div.style.display == 'none') {
             div.style.display = '';
@@ -510,12 +588,12 @@ function AddReminderDiv() {
             cnt++;
             break;
         }
-        else {
+        else
             cnt++;
-        }
+
     }
 
-    if (cnt == 5) {
+    if (cnt == REMINDER_MAX) {
         $('href-add-remind').style.display = 'none';
     }
 }
@@ -620,6 +698,14 @@ function OnGotMessage(request, sender, sendResponse) {
     }
 
     if (request.greeting == "AddedOk") {
+        if (request.type == "task") {
+            backGround.popupSettings.ClearSavedTask();
+        }
+
+        if (request.type == "event") {
+            backGround.popupSettings.ClearSavedEvent();
+        }
+
         changeState(ST_SUCCESS);
         return;
     }
@@ -658,10 +744,11 @@ function GetCalendarList(requestIsOk) {
     }
 
     // restoring task in process
-    if (backGround.eventInProcess != null) {
-        index = SearchCalendarIndexById(backGround.eventInProcess.listId );
+    if (backGround.popupSettings.SavedEventExists()) {
+        var eventInProcess = backGround.popupSettings.GetSavedEvent();
+        index = SearchCalendarIndexById(eventInProcess.listId );
         if (index != -1) {
-            $('combo-event-calendar').value = backGround.eventInProcess.listName;
+            $('combo-event-calendar').value = eventInProcess.listName;
         }
         else {
             $('combo-event-calendar').value = "???";
@@ -700,10 +787,11 @@ function GetTaskLists(requestIsOk) {
     }
 
     // restoring task in process
-    if (backGround.taskInProcess != null) {
-        index = SearchTaskListIndexById(backGround.taskInProcess.listId );
+    if (backGround.popupSettings.SavedTaskExists()) {
+        var taskInProcess = backGround.popupSettings.GetSavedTask();
+        index = SearchTaskListIndexById(taskInProcess.listId );
         if (index != -1) {
-            $('combo-task-list').value = backGround.taskInProcess.listName;
+            $('combo-task-list').value = taskInProcess.listName;
         }
         else {
             $('combo-task-list').value = "???";
@@ -746,10 +834,28 @@ function DoAddTask() {
 
     var name = $('input-task-name').value;
     var listName = $('combo-task-list').value;
-    var date = $('checkbox-no-date').checked ?  $('input-task-date').value : null;
+    var date = $('checkbox-with-date').checked ?  $('input-task-date').value : null;
     var notes = $('input-task-comment').value;
 
     backGround.AddTask(name, listName, date,  notes);
+}
+
+/*
+   Clear Task Fields action
+ */
+function DoClearTask() {
+   backGround.popupSettings.ClearSavedTask();
+   RestoreTaskInProcess();
+   SetButtonAddTaskState();
+}
+
+/*
+    Clear Event Fields action
+ */
+function DoClearEvent() {
+    backGround.popupSettings.ClearSavedEvent();
+    RestoreEventInProcess();
+    SetButtonAddEventState();
 }
 
 /*
@@ -856,6 +962,8 @@ function LocalizePage() {
         chrome.i18n.getMessage('task_comment_title');
     $('button-add-task').value =
         chrome.i18n.getMessage('add_task_action_title');
+    $('button-clear-task').value =
+        chrome.i18n.getMessage('clear_task_action_title');
 
     // localized combo lists
     repetitionPeriodsLocale = repetitionPeriods.slice(0);
@@ -889,13 +997,15 @@ function LocalizePage() {
         chrome.i18n.getMessage('event_calendar_title');
     $('button-add-event').value =
         chrome.i18n.getMessage('add_event_action_title');
+    $('button-clear-event').value =
+        chrome.i18n.getMessage('clear_event_action_title');
 
     $('label-event-remind').innerHTML =
         chrome.i18n.getMessage('reminder_title');
     $('href-add-remind').innerHTML =
         chrome.i18n.getMessage('reminder_add_action_title');
 
-    for (var i=1; i<=5; i++) {
+    for (var i=1; i<=REMINDER_MAX; i++) {
         var label = $(GetRemindLabelName(i));
         label.innerHTML =
             chrome.i18n.getMessage('reminder_type');
@@ -906,6 +1016,14 @@ function LocalizePage() {
     MSG_ERROR = chrome.i18n.getMessage('error_message');
     MSG_SUCCESS = chrome.i18n.getMessage('success_message');
     MSG_UNAUTHORIZED = chrome.i18n.getMessage('unauthorized_message');
+}
+
+/*
+    Returns reminder div name with number i
+    int i - reminder`s number
+*/
+function GetRemindDivName(i) {
+    return "div-event-remind-" + i.toString();
 }
 
 /*
@@ -1027,7 +1145,7 @@ function OnTimeFromChanged() {
     Returns true if all task fields are valid, false otherwise
 */
 function AreAllTaskfieldsValid() {
-    var taskDateIsValid = $('input-task-date').checkValidity() || !($('checkbox-no-date').checked);
+    var taskDateIsValid = $('input-task-date').checkValidity() || !($('checkbox-with-date').checked);
 
     if  ($('input-task-name').checkValidity() && $('combo-task-list').checkValidity() && taskDateIsValid) {
         return true;
@@ -1074,14 +1192,21 @@ function OnRepeatCheckChanged () {
     Hides input-task-date if checkbox not checked, shows otherwise
 */
 function OnNoDateCheckChanged() {
-    if ($('checkbox-no-date').checked) {
-        $('input-task-date').style.display = '';
-    }
-    else {
-        $('input-task-date').style.display = 'none';
-    }
+    $('input-task-date').style.display = $('checkbox-with-date').checked ? '' : 'none';
+    var taskInProcess = backGround.popupSettings.GetSavedTask();
+    taskInProcess.date = $('checkbox-with-date').checked ?  $('input-task-date').value : null;
 
     SetButtonAddTaskState();
+}
+
+function OnTaskFieldChanged(e) {
+    backGround.popupSettings.GetSavedTask();
+    SetButtonAddTaskState();
+}
+
+function OnEventFieldChanged(e) {
+    backGround.popupSettings.GetSavedEvent();
+    SetButtonAddEventState();
 }
 
 /*
@@ -1101,7 +1226,7 @@ function OnAllDayCheckChanged() {
 
 window.onerror = function(message, file, line) {
     backGround._gaq.push(['_trackEvent', "Global", "Exception", file + "(" + line + "): " + message])
-}
+};
 
 
 

@@ -21,6 +21,8 @@
     "unauthorized_message": {"message": "Пожалуйста, авторизуйтесь!"},
     "add_task_action_title":{"message": "Сохранить"},
     "add_event_action_title":{"message": "Сохранить"},
+    "clear_task_action_title": {"message": "Очистить"},
+    "clear_event_action_title": {"message": "Очистить"},
     "add_task_tab_title":{"message": "Задача"},
     "add_event_tab_title":{"message": "Мероприятие"},
     "authorize_tab_title":{"message": "Авторизация"},

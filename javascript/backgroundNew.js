@@ -9,10 +9,10 @@ var oauthMine = new OAuth2(c_redirect_uri, c_client_id, c_scope);
 var popupSettings = new PopupSettings(-1, -1);
 
 // the task that now is processing, if we will have error it will be shown in popup
-var taskInProcess = null;
+// var taskInProcess = null;
 
 // the event that now is processing
-var eventInProcess = null;
+//var eventInProcess = null;
 
 // task lists of a current user
 var taskLists = [];
@@ -44,8 +44,8 @@ function updateView() {
             taskLists = [];
             calendarLists = [];
             userName = null;
-            taskInProcess = null;
-            eventInProcess = null;
+        //    taskInProcess = null;
+        //    eventInProcess = null;
         }
     }
 
@@ -170,8 +170,8 @@ function onAddTask(xhr)
             }
         }
         else {
-            taskInProcess = null;
-            chrome.runtime.sendMessage({greeting: "AddedOk"});
+          //  taskInProcess = null;
+            chrome.runtime.sendMessage({greeting: "AddedOk", type: "task"});
         }
     };
 }
@@ -200,8 +200,8 @@ function onAddEvent(xhr)
             }
         }
         else {
-            eventInProcess = null;
-            chrome.runtime.sendMessage({greeting: "AddedOk"});
+            // eventInProcess = null;
+            chrome.runtime.sendMessage({greeting: "AddedOk", type: "event"});
         }
     };
 }
@@ -264,7 +264,7 @@ function AddTask(name, taskListName, date, notes) {
 
     var listId = getTaskIdByName(taskListName);
 
-    taskInProcess = new Task(name, listId, date, notes, taskListName);
+//    taskInProcess = new Task(name, listId, date, notes, taskListName);
 
     var xhr = new XMLHttpRequest();
     try
@@ -320,7 +320,7 @@ function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, de
 
     var listId = getCalendarIdByName(calendarName);
 
-    eventInProcess = new EventCal(name, calendarName, listId, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray);
+    // eventInProcess = new EventCal(name, calendarName, listId, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray);
 
     var timeZone = getTimeZoneByName(calendarName);
 

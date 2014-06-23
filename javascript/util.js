@@ -288,6 +288,7 @@ function daydiff(first, second) {
     return (new Date(second)- new Date(first))/(1000*60*60*24);
 }
 
+
 /*
     returns difference between first and second times in minutes
     string first as HH:MM
