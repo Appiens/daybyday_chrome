@@ -334,9 +334,20 @@ function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, de
             throw new Error(error);
         };
 
+        var timeStartLong = timeStart;
 
-        var start = allDay? dateStart : dateStart + 'T' + timeStart  + GetTimeZoneOffsetStr(); //dateStart + ':00' + GetTimeZoneOffsetStr();
-        var end = allDay?  CurrDateStr(addDays(dateEnd, 1)): dateEnd + 'T' + timeEnd  + GetTimeZoneOffsetStr(); // dateEnd + ':00' + GetTimeZoneOffsetStr();
+        if (timeStartLong.length == 5) {
+            timeStartLong += ':00';
+        }
+
+        var timeEndLong = timeEnd;
+
+        if (timeEndLong.length == 5) {
+            timeEndLong += ':00';
+        }
+
+        var start = allDay? dateStart : dateStart + 'T' + timeStartLong  + GetTimeZoneOffsetStr(); //dateStart + ':00' + GetTimeZoneOffsetStr();
+        var end = allDay?  CurrDateStr(addDays(dateEnd, 1)): dateEnd + 'T' + timeEndLong  + GetTimeZoneOffsetStr(); // dateEnd + ':00' + GetTimeZoneOffsetStr();
 
         LogMsg(start);
         LogMsg(end);
