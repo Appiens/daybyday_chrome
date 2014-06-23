@@ -23,7 +23,7 @@ form {
     font-size: 14px;
 }
 
-/* описывает линию, которя отделяет вкладку и названия вкладок*/
+
 ul#Tabs {
     font-size: 12px;
     font-weight: bold;
@@ -31,13 +31,14 @@ ul#Tabs {
     padding-bottom: 28px;
     border-bottom: 1px solid #0099CC;
     margin-bottom: 12px;
+    text-align: center;
 }
 
 /* описывает названия вкладок*/
 #Tabs li.Tab {
     float: right;
     height: 25px;
-    width: 30%;
+    width: 40%;
     background-color: #fafafa;
     margin: 2px 0px 0px 5px;
     border: 1px solid #0099CC;
@@ -62,7 +63,7 @@ ul#Tabs {
 #Tabs li.SelectedTab {
     float: right;
     height: 25px;
-    width: 30%;
+    width: 40%;
     background-color: #fafafa;
     margin: 2px 0px 0px 5px;
     border-top: 1px solid  #0099CC;
@@ -115,7 +116,7 @@ input {
 
 
 input[type=button] {
-    background-color: #AFEEEE;
+    background-color: #DFEEFF;
     text-indent:0px;
     border:1px solid #0099CC;
     display:inline-block;
