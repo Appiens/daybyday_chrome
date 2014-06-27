@@ -919,6 +919,7 @@ function DoAddEvent() {
     var name = $('input-event-name').value;
     var listName = $('combo-event-calendar').value;
     var listId = getCalendarIdByName(listName);
+    var timeZone = getTimeZoneByName(listName);
     var dateStart = $('input-event-from').value;
     var dateEnd = $('input-event-to').value;
     var timeStart = $('input-event-from-time').value;
@@ -932,7 +933,7 @@ function DoAddEvent() {
     var reminderTimeArray = MakeReminderTimeArray();
     var reminderMethodArray = MakeReminderMethodArray();
 
-    backGround.AddEvent(name, listId, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray);
+    backGround.AddEvent(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray);
 }
 
 /*
@@ -1316,6 +1317,20 @@ function OnAllDayCheckChanged() {
        $('input-event-from-time').style.display = '';
        $('input-event-to-time').style.display = '';
    }
+}
+
+/* Gets calendar time zone by calendar name */
+/* string calendarName - calendar summary (name)*/
+/* returns int calendar id, -1 if not found*/
+function getTimeZoneByName(calendarName) {
+    for (var i = 0, cal; cal = calendarLists[i]; i++)
+    {
+        if (cal.summary == calendarName) {
+            return cal.timeZone;
+        }
+    }
+
+    return -1;
 }
 
 window.onerror = function(message, file, line) {

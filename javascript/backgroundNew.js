@@ -212,20 +212,6 @@ function onAddEvent(xhr)
     };
 }
 
-/* Gets calendar time zone by calendar name */
-/* string calendarName - calendar summary (name)*/
-/* returns int calendar id, -1 if not found*/
-function getTimeZoneByName(calendarName) {
-    for (var i = 0, cal; cal = calendarLists[i]; i++)
-    {
-        if (cal.summary == calendarName) {
-            return cal.timeZone;
-        }
-    }
-
-    return -1;
-}
-
 /* Adds task to a task list */
 /* string name - name of a task,
    string listId - id of task list to add task,
@@ -275,6 +261,7 @@ function AddTask(name, listId, date, notes) {
 /* Adds event to a calendar */
 /* string name - name of an event,
    string listId - id of calendar to add an event,
+   string timeZone - timeZone of the calendar
    string dateStart - start date of an event (as a value of input datetime-local),
    string dateEnd - end date of an event (as a value of input datetime-local),
    string description - the description of an event,
@@ -284,14 +271,12 @@ function AddTask(name, listId, date, notes) {
    array of string reminderTimeArray - subArray of remindersPeriods, [] if don`t need reminders
    array of string reminderMethodArray - subArray of remindersMethods, [] if don`t need reminders
  */
-function AddEvent(name, listId, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray) {
+function AddEvent(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray) {
     if (!oauthMine.allowRequest())
     {
         LogMsg('AddEvent: another request is processing');
         throw new Error('AddEvent: another request is processing');
     }
-
-    var timeZone = getTimeZoneByName(calendarName);
 
     var xhr = new XMLHttpRequest();
     try
