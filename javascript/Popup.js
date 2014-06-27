@@ -99,10 +99,10 @@ var WIN_EVENT = 2;
 var backGround;
 
 // current user`s task lists
-var taskLists = null;
+var taskLists = [];
 
 // current user`s calendar lists
-var calendarLists = null;
+var calendarLists = [];
 
 // last entered event date From (to correct date To after it changes)
 var previousDateFrom = null;
@@ -138,21 +138,24 @@ function init() {
     }
     else {
         changeState(ST_CONNECTING);
-        if (backGround.oauthMine.isTokenOk()) {
+     //   if (backGround.oauthMine.isTokenOk()) {
             if (backGround.taskLists != [] && backGround.userName != null && backGround.calendarLists != []) {
                 backGround.LogMsg('Popup: taking old vals');
                 GetGoogleInfoFromBackGround();
+
+                // but asking for new ones for the next time
+                GetGoogleInfo(false);
             }
             else {
                 backGround.LogMsg('Popup: reloading vals');
                 GetGoogleInfo(false);
             }
-        }
+      /*  }
         else {
 
             backGround.LogMsg('Popup: loading vals');
             GetGoogleInfo(false);
-        }
+        }*/
     }
 
     //fill combos
@@ -183,7 +186,7 @@ window.onunload = function() {
           var taskInProcess = backGround.popupSettings.GetSavedTask();
           taskInProcess.name = $('input-task-name').value;
           taskInProcess.listName = $('combo-task-list').value;
-          taskInProcess.listId = backGround.getTaskIdByName(taskInProcess.listName);
+          taskInProcess.listId = getTaskIdByName(taskInProcess.listName);
           taskInProcess.date =  $('checkbox-with-date').checked ? $('input-task-date').value : null;
           taskInProcess.notes = $('input-task-comment').value;
     }
@@ -192,7 +195,7 @@ window.onunload = function() {
          var eventInProcess = backGround.popupSettings.GetSavedEvent();
          eventInProcess.name = $('input-event-name').value;
          eventInProcess.listName = $('combo-event-calendar').value;
-         eventInProcess.listId = backGround.getCalendarIdByName(eventInProcess.listName);
+         eventInProcess.listId = getCalendarIdByName(eventInProcess.listName);
          eventInProcess.dateStart = $('input-event-from').value;
          eventInProcess.dateEnd = $('input-event-to').value;
          eventInProcess.timeStart = $('input-event-from-time').value;
@@ -399,7 +402,8 @@ function AddEventHandlers() {
 
        // input to event fields
     $('input-event-name').addEventListener('input', OnEventFieldChanged);
-    $('combo-event-calendar').addEventListener('input', OnEventFieldChanged);
+    $('combo-event-calendar').addEventListener('change', OnEventFieldChanged);
+    $('combo-event-calendar').addEventListener('change', OnCalendarChanged);
     $('input-event-from').addEventListener('input', OnEventFieldChanged);
     $('input-event-to').addEventListener('input', OnEventFieldChanged);
     $('input-event-from-time').addEventListener('input', OnEventFieldChanged);
@@ -700,16 +704,15 @@ function OnGotMessage(request, sender, sendResponse) {
     backGround.LogMsg('Popup OnGotMessage ' + request.greeting);
 
     if (request.greeting == "taskListReady") {
-
         backGround.LogMsg("taskListReady");
 
-    /*    if (request.authCancelled) {
-            changeState(ST_DISCONNECTED);
+        // we already have taskList from backGround and we don`t want to change it online
+        // we will get it when popup will be opened the next time
+        if (taskLists.length > 0) {
             return;
-        }*/
+        }
 
-         GetTaskLists(request.isOk);
-
+        GetTaskLists(request.isOk);
         return;
     }
 
@@ -720,10 +723,11 @@ function OnGotMessage(request, sender, sendResponse) {
             return;
         }
 
-      /*  if (request.authCancelled) {
-            changeState(ST_DISCONNECTED);
+        // we already have calendarList from backGround and we don`t want to change it online
+        // we will get it when popup will be opened the next time
+        if (calendarLists.length > 0) {
             return;
-        }*/
+        }
 
         GetCalendarList(request.isOk);
         return;
@@ -735,11 +739,6 @@ function OnGotMessage(request, sender, sendResponse) {
         if (currentState == ST_DISCONNECTED) {
             return;
         }
-
-   /*     if (request.authCancelled) {
-            changeState(ST_DISCONNECTED);
-            return;
-        }*/
 
         GetUserName(request.isOk);
         return;
@@ -786,7 +785,9 @@ function GetCalendarList(requestIsOk) {
     {
         if (cal.accessRole == "owner") {
             var option = document.createElement("option");
-            option.text = cal.summary;
+            option.innerHTML = cal.summary;
+            option.style.color = cal.backgroundColor;
+
             x.add(option,x[0]);
         }
     }
@@ -798,10 +799,10 @@ function GetCalendarList(requestIsOk) {
         if (index != -1) {
             $('combo-event-calendar').value = eventInProcess.listName;
         }
-        else {
-            $('combo-event-calendar').value = "???";
-        }
     }
+
+
+    OnCalendarChanged();
 
     if (currentState != ST_CONNECTED) {
         changeState(ST_CONNECTED);
@@ -841,9 +842,6 @@ function GetTaskLists(requestIsOk) {
         if (index != -1) {
             $('combo-task-list').value = taskInProcess.listName;
         }
-        else {
-            $('combo-task-list').value = "???";
-        }
     }
 
   /*  if (currentState != ST_CONNECTED) {
@@ -882,10 +880,11 @@ function DoAddTask() {
 
     var name = $('input-task-name').value;
     var listName = $('combo-task-list').value;
+    var listId = getTaskIdByName(listName);
     var date = $('checkbox-with-date').checked ?  $('input-task-date').value : null;
     var notes = $('input-task-comment').value;
 
-    backGround.AddTask(name, listName, date,  notes);
+    backGround.AddTask(name, listId, date,  notes);
 }
 
 /*
@@ -919,6 +918,7 @@ function DoAddEvent() {
 
     var name = $('input-event-name').value;
     var listName = $('combo-event-calendar').value;
+    var listId = getCalendarIdByName(listName);
     var dateStart = $('input-event-from').value;
     var dateEnd = $('input-event-to').value;
     var timeStart = $('input-event-from-time').value;
@@ -932,7 +932,7 @@ function DoAddEvent() {
     var reminderTimeArray = MakeReminderTimeArray();
     var reminderMethodArray = MakeReminderMethodArray();
 
-    backGround.AddEvent(name, listName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray);
+    backGround.AddEvent(name, listId, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray);
 }
 
 /*
@@ -1262,6 +1262,45 @@ function OnTaskFieldChanged(e) {
 function OnEventFieldChanged(e) {
     backGround.popupSettings.GetSavedEvent();
     SetButtonAddEventState();
+}
+
+function OnCalendarChanged() {
+    var combo = $('combo-event-calendar');
+    backGround.LogMsg(combo.value);
+    for (var i=0; i < combo.options.length; i++) {
+        if (combo.value == combo.options[i].value) {
+            $('td-color-calendar').style.backgroundColor = combo.options[i].style.color;
+            break;
+        }
+    }
+}
+
+/* Gets task list id by task list name */
+/* string listName - task list title (name)*/
+/* int returns task list id, -1 if not found*/
+function getTaskIdByName(taskListName) {
+    for (var i = 0, cal; cal = taskLists[i]; i++)
+    {
+        if (cal.title == taskListName) {
+            return cal.id;
+        }
+    }
+
+    return -1;
+}
+
+/* Gets calendar id by calendar name */
+/* string calendarName - calendar summary (name)*/
+/* int returns calendar id, -1 if not found*/
+function getCalendarIdByName(calendarName) {
+    for (var i = 0, cal; cal = calendarLists[i]; i++)
+    {
+        if (cal.summary == calendarName) {
+            return cal.id;
+        }
+    }
+
+    return -1;
 }
 
 /*

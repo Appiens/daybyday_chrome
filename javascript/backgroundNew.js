@@ -41,6 +41,21 @@ function updateView() {
         }
     }
 
+    if (oauthMine.isTokenOk() && oauthMine.allowRequest()) {
+        if (taskLists.length == 0) {
+            AskForTaskLists(true);
+        }
+
+        if (calendarLists.length == 0) {
+            AskForCalendars(true);
+        }
+
+        if (!userName) {
+            AskForName(true);
+        }
+    }
+
+
     currTokenOk = isTokenOk;
 };
 
@@ -197,34 +212,6 @@ function onAddEvent(xhr)
     };
 }
 
-/* Gets task list id by task list name */
-/* string listName - task list title (name)*/
-/* int returns task list id, -1 if not found*/
-function getTaskIdByName(taskListName) {
-    for (var i = 0, cal; cal = taskLists[i]; i++)
-    {
-        if (cal.title == taskListName) {
-            return cal.id;
-        }
-    }
-
-    return -1;
-}
-
-/* Gets calendar id by calendar name */
-/* string calendarName - calendar summary (name)*/
-/* int returns calendar id, -1 if not found*/
-function getCalendarIdByName(calendarName) {
-    for (var i = 0, cal; cal = calendarLists[i]; i++)
-    {
-        if (cal.summary == calendarName) {
-            return cal.id;
-        }
-    }
-
-    return -1;
-}
-
 /* Gets calendar time zone by calendar name */
 /* string calendarName - calendar summary (name)*/
 /* returns int calendar id, -1 if not found*/
@@ -241,19 +228,17 @@ function getTimeZoneByName(calendarName) {
 
 /* Adds task to a task list */
 /* string name - name of a task,
-   string taskListName - name of task list to add task,
+   string listId - id of task list to add task,
    string date - date of task (as a value of input date),
    string notes - comment to task
  */
-function AddTask(name, taskListName, date, notes) {
+function AddTask(name, listId, date, notes) {
 
     if (!oauthMine.allowRequest())
     {
         LogMsg('AddTask: another request is processing');
         throw new Error('AddTask: another request is processing');
     }
-
-    var listId = getTaskIdByName(taskListName);
 
     var xhr = new XMLHttpRequest();
     try
@@ -289,7 +274,7 @@ function AddTask(name, taskListName, date, notes) {
 
 /* Adds event to a calendar */
 /* string name - name of an event,
-   string calendar - name of calendar to add an event,
+   string listId - id of calendar to add an event,
    string dateStart - start date of an event (as a value of input datetime-local),
    string dateEnd - end date of an event (as a value of input datetime-local),
    string description - the description of an event,
@@ -299,16 +284,12 @@ function AddTask(name, taskListName, date, notes) {
    array of string reminderTimeArray - subArray of remindersPeriods, [] if don`t need reminders
    array of string reminderMethodArray - subArray of remindersMethods, [] if don`t need reminders
  */
-function AddEvent(name, calendarName, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray) {
-
-
+function AddEvent(name, listId, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray) {
     if (!oauthMine.allowRequest())
     {
         LogMsg('AddEvent: another request is processing');
         throw new Error('AddEvent: another request is processing');
     }
-
-    var listId = getCalendarIdByName(calendarName);
 
     var timeZone = getTimeZoneByName(calendarName);
 

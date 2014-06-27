@@ -157,8 +157,6 @@ input[type=button]:disabled {
     margin-top:5px;
 }
 
-
-
 .new-select-style-wpandyou select, textarea, input {
      font-family: Arial;
      width:97%;
@@ -171,7 +169,17 @@ input[type=button]:disabled {
      box-sizing:content-box;
  }
 
-.new-select-style-reminder select  {
+.calendar-select-style select{
+    font-family: Arial;
+    width:97%;
+    min-height:20px;
+    display: block;
+    padding-left:5px;
+    outline: none;
+    box-sizing:content-box;
+}
+
+.new-select-style-reminder {
     width:97%;
     min-height:15px;
     display:block;
