@@ -11,6 +11,12 @@ function PopupSettings(lastState, lastTab) {
     // keeps popup last selected tab after it closes
     this.lastTab = lastTab;
 
+    // keeps last selected calendar
+    this.lastSelectedCalendar = null;
+
+    // keeps last selected task list
+    this.lastSelectedTaskList = null;
+
     // date & time when popup was closed
     var startKeepingTime = null;
 
@@ -63,7 +69,7 @@ function PopupSettings(lastState, lastTab) {
     // creates and returns it otherwise
     this.GetSavedTask = function() {
         if (taskInProcess == null) {
-            taskInProcess = new Task('', null, null, '', null);
+            taskInProcess = new Task('', null, null, '', null, null);
         }
 
         return taskInProcess;

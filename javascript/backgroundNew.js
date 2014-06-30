@@ -386,6 +386,9 @@ function CreateEventParams(start, end, allDay, description, name, place, recurre
 
        params += ']}';
     }
+    else {
+        params += ',"reminders": { "useDefault": false }';
+    }
 
     params += '}';
 
@@ -435,7 +438,7 @@ function AskForCalendars(blindMode) {
             throw new Error(error);
         };
 
-        url  = 'https://www.googleapis.com/calendar/v3/users/me/calendarList';
+        url  = 'https://www.googleapis.com/calendar/v3/users/me/calendarList?fields=items(accessRole%2CbackgroundColor%2CdefaultReminders%2Cdescription%2Cid%2Clocation%2Csummary%2CtimeZone)';
         xhr.open('GET', url);
         oauthMine.setSignedRequest(xhr, null, blindMode);
     }
@@ -509,13 +512,6 @@ function LogMsg(message) {
 
 /* Background page initialization*/
 function init () {
-    updateView();
-    oauthMine.init();
-    window.setInterval(updateView, 1000);
-    chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
-    chrome.browserAction.onClicked.addListener(/*AskForTasks*/ AuthAndAskForTaskLists);
-    oauthMine.authorize(false, true, false);
-
     _gaq = _gaq || [];
     _gaq.push(['_setAccount', c_analytics_code]);
 
@@ -528,6 +524,13 @@ function init () {
         var s = document.getElementsByTagName('script')[0];
         s.parentNode.insertBefore(ga, s);
     })();
+
+    updateView();
+    oauthMine.init();
+    window.setInterval(updateView, 1000);
+    chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
+    chrome.browserAction.onClicked.addListener(/*AskForTasks*/ AuthAndAskForTaskLists);
+    oauthMine.authorize(false, true, false);
 }
 
 window.addEventListener('load', init, false);

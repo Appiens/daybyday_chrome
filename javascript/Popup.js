@@ -189,6 +189,7 @@ window.onunload = function() {
           taskInProcess.listId = getTaskIdByName(taskInProcess.listName);
           taskInProcess.date =  $('checkbox-with-date').checked ? $('input-task-date').value : null;
           taskInProcess.notes = $('input-task-comment').value;
+          taskInProcess.notesRows = $('input-task-comment').style.height;
     }
 
     if (backGround.popupSettings.SavedEventExists()) {
@@ -208,6 +209,9 @@ window.onunload = function() {
          eventInProcess.reminderTimeArray = MakeReminderTimeArray();
          eventInProcess.reminderMethodArray = MakeReminderMethodArray();
     }
+
+    backGround.popupSettings.lastSelectedTaskList = getTaskIdByName($('combo-task-list').value);
+    backGround.popupSettings.lastSelectedCalendar = getCalendarIdByName($('combo-event-calendar').value);
 
     backGround.popupSettings.SetStartKeepingTime();
 }
@@ -243,6 +247,11 @@ function RestoreTaskInProcess() {
         $('input-task-comment').value = taskInProcess.notes;
         $('checkbox-with-date').checked = taskInProcess.date != null;
         $('input-task-date').style.display = taskInProcess.date != null ? '': 'none';
+
+        // #8
+        /*if (taskInProcess.notesRows) {
+          //   $('input-task-comment').style.height = taskInProcess.notesRows;
+        }*/
     }
     else {
         $('input-task-name').value = '';
@@ -326,6 +335,7 @@ function RestoreEventInProcess() {
         $('checkbox-all-day').checked = false;
         $('input-event-place').value = '';
         $('checkbox-repetition').checked = false;
+        $('combo-repetition-interval').style.display = 'none';
         $('href-add-remind').style.display = '';
 
         $('label-event-remind').style.display = 'none';
@@ -366,6 +376,7 @@ function AddEventHandlers() {
     $('tab-add-task').addEventListener('click', GotoTaskTab);
     $('tab-add-event').addEventListener('click', GotoEventTab);
     $('tab-sign-in').addEventListener('click', GotoAuthTab);
+
     $('button-add-task').addEventListener('click', DoAddTask);
     $('button-clear-task').addEventListener('click', DoClearTask);
 
@@ -400,6 +411,9 @@ function AddEventHandlers() {
     $('checkbox-with-date').addEventListener('change', OnNoDateCheckChanged);
     $('input-task-comment').addEventListener('input', OnTaskFieldChanged);
 
+    $('input-task-name').addEventListener("keypress", onKeypressTask, false);
+    $('input-task-date').addEventListener("keypress", onKeypressTask, false);
+
        // input to event fields
     $('input-event-name').addEventListener('input', OnEventFieldChanged);
     $('combo-event-calendar').addEventListener('change', OnEventFieldChanged);
@@ -419,6 +433,13 @@ function AddEventHandlers() {
 
     $('input-event-from').addEventListener('input', OnDateFromChanged);
     $('input-event-from-time').addEventListener('input', OnTimeFromChanged);
+
+    $('input-event-name').addEventListener("keypress", onKeypressEvent, false);
+    $('input-event-from').addEventListener("keypress", onKeypressEvent, false);
+    $('input-event-to').addEventListener("keypress", onKeypressEvent, false);
+    $('input-event-from-time').addEventListener("keypress", onKeypressEvent, false);
+    $('input-event-to-time').addEventListener("keypress", onKeypressEvent, false);
+    $('input-event-place').addEventListener("keypress", onKeypressEvent, false);
 
     chrome.runtime.onMessage.addListener(OnGotMessage);
 }
@@ -800,6 +821,12 @@ function GetCalendarList(requestIsOk) {
             $('combo-event-calendar').value = eventInProcess.listName;
         }
     }
+    else if (backGround.popupSettings.lastSelectedCalendar) {
+        index = SearchCalendarIndexById(backGround.popupSettings.lastSelectedCalendar);
+        if (index != -1) {
+            $('combo-event-calendar').selectedIndex = index;
+        }
+    }
 
 
     OnCalendarChanged();
@@ -841,6 +868,12 @@ function GetTaskLists(requestIsOk) {
         index = SearchTaskListIndexById(taskInProcess.listId );
         if (index != -1) {
             $('combo-task-list').value = taskInProcess.listName;
+        }
+    }
+    else if (backGround.popupSettings.lastSelectedTaskList) {
+        index = SearchTaskListIndexById(backGround.popupSettings.lastSelectedTaskList);
+        if (index != -1) {
+            $('combo-task-list').selectedIndex = index;
         }
     }
 
@@ -1331,6 +1364,22 @@ function getTimeZoneByName(calendarName) {
     }
 
     return -1;
+}
+
+function onKeypressTask(event) {
+    var keyCode = event.keyCode;
+
+    if (keyCode == 13 && AreAllTaskfieldsValid()) {
+        DoAddTask();
+    }
+}
+
+function onKeypressEvent(event) {
+    var keyCode = event.keyCode;
+
+    if (keyCode == 13 && AreAllEventFieldsValid()) {
+        DoAddEvent();
+    }
 }
 
 window.onerror = function(message, file, line) {
