@@ -113,6 +113,10 @@ var previousTimeFrom = null;
 // maximum reminders number
 var REMINDER_MAX = 5;
 
+var addingTaskInProcess = false;
+
+var addingEventInProcess = false;
+
 window.addEventListener('load', init, false);
 
 
@@ -768,10 +772,14 @@ function OnGotMessage(request, sender, sendResponse) {
     if (request.greeting == "AddedOk") {
         if (request.type == "task") {
             backGround.popupSettings.ClearSavedTask();
+            addingTaskInProcess = false;
+            SetButtonAddTaskState();
         }
 
         if (request.type == "event") {
             backGround.popupSettings.ClearSavedEvent();
+            addingEventInProcess = false;
+            SetButtonAddEventState();
         }
 
         changeState(ST_SUCCESS);
@@ -779,6 +787,16 @@ function OnGotMessage(request, sender, sendResponse) {
     }
 
     if (request.greeting == "AddedError") {
+        if (request.type == "task") {
+            addingTaskInProcess = false;
+            SetButtonAddTaskState();
+        }
+
+        if (request.type == "event") {
+            addingEventInProcess = false;
+            SetButtonAddEventState();
+        }
+
         alert(MSG_ERROR + '\n' + request.error);
         return;
     }
@@ -903,13 +921,19 @@ function GetUserName(requestIsOk) {
     Add task action
 */
 function DoAddTask() {
-
-    backGround.LogMsg('Popup: Add Task Called');
-    backGround.trackEvent('Add a task', 'clicked');
-
     if (!AreAllTaskfieldsValid()) {
         return;
     }
+
+    if (addingTaskInProcess) {
+        return;
+    }
+
+    addingTaskInProcess = true;
+    SetButtonAddTaskState();
+
+    backGround.LogMsg('Popup: Add Task Called');
+    backGround.trackEvent('Add a task', 'clicked');
 
     var name = $('input-task-name').value;
     var listName = $('combo-task-list').value;
@@ -942,12 +966,19 @@ function DoClearEvent() {
     Add event action
  */
 function DoAddEvent() {
-    backGround.LogMsg('Popup: Add Event Called');
-    backGround.trackEvent('Add an event', 'clicked');
-
     if (!AreAllEventFieldsValid()) {
         return;
     }
+
+    if (addingEventInProcess) {
+        return;
+    }
+
+    addingEventInProcess = true;
+    SetButtonAddEventState();
+
+    backGround.LogMsg('Popup: Add Event Called');
+    backGround.trackEvent('Add an event', 'clicked');
 
     var name = $('input-event-name').value;
     var listName = $('combo-event-calendar').value;
@@ -1236,7 +1267,7 @@ function OnTimeFromChanged() {
 function AreAllTaskfieldsValid() {
     var taskDateIsValid = $('input-task-date').checkValidity() || !($('checkbox-with-date').checked);
 
-    if  ($('input-task-name').checkValidity() && $('combo-task-list').checkValidity() && taskDateIsValid) {
+    if  ($('input-task-name').checkValidity() && $('combo-task-list').checkValidity() && taskDateIsValid && !addingTaskInProcess) {
         return true;
     }
     else {
@@ -1253,7 +1284,8 @@ function AreAllEventFieldsValid() {
          $('input-event-to').checkValidity() &&
          $('combo-event-calendar').checkValidity() &&
          $('input-event-from-time').checkValidity() &&
-         $('input-event-to-time').checkValidity()) {
+         $('input-event-to-time').checkValidity() &&
+        !addingEventInProcess) {
         return true;
     }
     else {
@@ -1300,7 +1332,6 @@ function OnEventFieldChanged(e) {
 
 function OnCalendarChanged() {
     var combo = $('combo-event-calendar');
-    backGround.LogMsg(combo.value);
     for (var i=0; i < combo.options.length; i++) {
         if (combo.value == combo.options[i].value) {
             $('td-color-calendar').style.backgroundColor = combo.options[i].style.color;

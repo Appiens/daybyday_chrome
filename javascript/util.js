@@ -167,6 +167,12 @@ function enableButton(button) {
 }
 
 /*
+check button is disabled */
+function IsButtonDisabled(button) {
+    return button.hasAttribute('disabled');
+}
+
+/*
     returns timezone offset as string
     +04:00 for example
 */

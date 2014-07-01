@@ -167,7 +167,7 @@ function onAddTask(xhr)
                 var text = xhr.response;
                 var obj = JSON.parse(text);
                 var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
-                chrome.runtime.sendMessage({greeting: "AddedError", error: error});
+                chrome.runtime.sendMessage({greeting: "AddedError", error: error, type: "task"});
                 throw new Error(error);
             }
             catch (e) {
@@ -197,7 +197,7 @@ function onAddEvent(xhr)
                 var text = xhr.response;
                 var obj = JSON.parse(text);
                 var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
-                chrome.runtime.sendMessage({greeting: "AddedError", error: error});
+                chrome.runtime.sendMessage({greeting: "AddedError", error: error, type: "event"});
                 throw new Error(error);
             }
             catch (e) {
