@@ -114,6 +114,15 @@ input {
     box-sizing:content-box;
 }
 
+input[type=number] {
+    width: 97%;
+    min-height:15px;
+    display:block;
+    margin-bottom:1px;
+    margin-top:1px;
+    outline: none;
+    box-sizing:content-box;
+}
 
 input[type=button] {
     background-color: #DFEEFF;

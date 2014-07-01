@@ -78,6 +78,10 @@
     "reminder_2_weeks":{"message": "2 недели"},
     "reminder_3_weeks":{"message": "3 недели"},
     "reminder_4_weeks":{"message": "4 недели"},
+    "reminder_minutes": {"message": "мин."},
+    "reminder_hours": {"message": "ч."},
+    "reminder_days": {"message": "дн."},
+    "reminder_weeks": {"message": "нед."},
     "reminder_popup": {"message": "Всплывающее окно"},
     "reminder_sms": {"message": "SMS"},
     "reminder_email": {"message": "Электронная почта"}

@@ -21,39 +21,10 @@ var reminderPeriodsLocale;
 // reminder periods  array
 var reminderPeriods =
     [
-        "reminder_1_minute$1",
-        "reminder_at_the_moment$0",
-        "reminder_5_minutes$5",
-        "reminder_10_minutes$10",
-        "reminder_15_minutes$15",
-        "reminder_20_minutes$20",
-        "reminder_25_minutes$25",
-        "reminder_30_minutes$30",
-        "reminder_45_minutes$45",
-        "reminder_1_hour$60",
-        "reminder_1_hour_30_minutes$90",
-        "reminder_2_hours$120",
-        "reminder_3_hours$180",
-        "reminder_4_hours$240",
-        "reminder_5_hours$300",
-        "reminder_6_hours$360",
-        "reminder_7_hours$420",
-        "reminder_8_hours$480",
-        "reminder_9_hours$540",
-        "reminder_10_hours$600",
-        "reminder_11_hours$660",
-        "reminder_12_hours$720",
-        "reminder_18_hours$1080",
-        "reminder_24_hours$1440",
-        "reminder_2_days$2880",
-        "reminder_3_days$4320",
-        "reminder_4_days$5760",
-        "reminder_5_days$7200",
-        "reminder_6_days$8640",
-        "reminder_1_week$10080",
-        "reminder_2_weeks$20160",
-        "reminder_3_weeks$30240",
-        "reminder_4_weeks$40320"
+        "reminder_minutes$1",
+        "reminder_hours$60",
+        "reminder_days$1440",
+        "reminder_weeks$10080"
     ];
 
 // reminder methods array local
@@ -112,6 +83,8 @@ var previousTimeFrom = null;
 
 // maximum reminders number
 var REMINDER_MAX = 5;
+
+var REMINDER_DEFAULT_VALUE = 10;
 
 var addingTaskInProcess = false;
 
@@ -294,34 +267,7 @@ function RestoreEventInProcess() {
             $('combo-repetition-interval').selectedIndex = i;
         }
 
-        // restoring reminders
-        if (eventInProcess.reminderTimeArray.length > 0) {
-            for (var j=0; j< eventInProcess.reminderTimeArray.length; j++) {
-                AddReminderDiv();
-
-                // restoring reminder times
-                var selectedTime = eventInProcess.reminderTimeArray[j];
-
-                for (var i = 0; i < reminderPeriods.length; i++) {
-                    if (reminderPeriods[i] == selectedTime) {
-                        break;
-                    }
-                }
-
-                $(GetRemindComboName(j+1)).selectedIndex = i;
-
-                var selectedMethod = eventInProcess.reminderMethodArray[j];
-
-                // restoring reminder methods
-                for (var i = 0; i < reminderMethods.length; i++) {
-                    if (reminderMethods[i] == selectedMethod) {
-                        break;
-                    }
-                }
-
-                $(GetRemindMethodComboName(j+1)).selectedIndex = i;
-            }
-        }
+        RestoreReminders(eventInProcess.reminderTimeArray, eventInProcess.reminderMethodArray);
     }
     else {
         // default value
@@ -344,13 +290,55 @@ function RestoreEventInProcess() {
 
         $('label-event-remind').style.display = 'none';
 
-        for (var j=0; j< REMINDER_MAX; j++) {
-            $(GetRemindDivName(j + 1)).style.display = 'none';
-        }
+        OnCalendarChanged(true);
     }
 
     previousDateFrom = $('input-event-from').value;
     previousTimeFrom =  $('input-event-from-time').value;
+}
+
+function RestoreReminders(reminderTimeArray, reminderMethodArray) {
+    for (var j=0; j< REMINDER_MAX; j++) {
+        $(GetRemindDivName(j + 1)).style.display = 'none';
+    }
+
+    if (reminderTimeArray.length > 0) {
+        for (var j=0; j< reminderTimeArray.length; j++) {
+            AddReminderDiv();
+
+            // restoring reminder times
+            var selectedTime = parseInt(reminderTimeArray[j]);
+            var result = selectedTime;
+            var resultIndex = 0;
+
+            if (selectedTime > 0) {
+                for (var i = 0; i < reminderPeriods.length; i++) {
+                    var k = parseInt(GetGoogleNameByValue(reminderPeriods[i]));
+
+                    var resultTmp = selectedTime / k;
+
+                    if (parseInt(resultTmp) == resultTmp ) {
+                        result = resultTmp;
+                        resultIndex = i;
+                    }
+                }
+            }
+
+            $(GetRemindComboName(j+1)).selectedIndex = resultIndex;
+            $(GetRemindInputName(j + 1)).value = result;
+
+            var selectedMethod = TEXT_VALUE_SPLITTER + reminderMethodArray[j];
+
+            // restoring reminder methods
+            for (var i = 0; i < reminderMethods.length; i++) {
+                if (reminderMethods[i].indexOf(selectedMethod) != -1) {
+                    break;
+                }
+            }
+
+            $(GetRemindMethodComboName(j+1)).selectedIndex = i;
+        }
+    }
 }
 
 /* restoring last selected tab that was saved in backGround.popupSettings.lastTab*/
@@ -421,7 +409,7 @@ function AddEventHandlers() {
        // input to event fields
     $('input-event-name').addEventListener('input', OnEventFieldChanged);
     $('combo-event-calendar').addEventListener('change', OnEventFieldChanged);
-    $('combo-event-calendar').addEventListener('change', OnCalendarChanged);
+    $('combo-event-calendar').addEventListener('change', OnCalendarChangedCallback);
     $('input-event-from').addEventListener('input', OnEventFieldChanged);
     $('input-event-to').addEventListener('input', OnEventFieldChanged);
     $('input-event-from-time').addEventListener('input', OnEventFieldChanged);
@@ -590,7 +578,9 @@ function MakeReminderTimeArray() {
     for (var i=1; i<= REMINDER_MAX; i++) {
         var div = $(remName + i.toString());
         if (div.style.display == '') {
-            reminderTimeArray.push(reminderPeriods[$(GetRemindComboName(i)).selectedIndex]);
+            var value =  parseInt($(GetRemindInputName(i)).value) * parseInt(GetGoogleNameByValue(reminderPeriods[$(GetRemindComboName(i)).selectedIndex]));
+
+            reminderTimeArray.push(value);
         }
     }
 
@@ -608,7 +598,7 @@ function MakeReminderMethodArray() {
     for (var i=1; i<= REMINDER_MAX; i++) {
         var div = $(remName + i.toString());
         if (div.style.display == '') {
-            reminderMethodArray.push(reminderMethods[$(GetRemindMethodComboName(i)).selectedIndex]);
+            reminderMethodArray.push(GetGoogleNameByValue(reminderMethods[$(GetRemindMethodComboName(i)).selectedIndex]));
         }
     }
 
@@ -661,6 +651,13 @@ function AddReminderDiv() {
         var div = $(remName + i.toString());
         if (div.style.display == 'none') {
             div.style.display = '';
+            // default values
+            $(GetRemindMethodComboName(i)).selectedIndex = 0;
+            $(GetRemindComboName(i)).selectedIndex = 0;
+            $(GetRemindInputName(i)).value = REMINDER_DEFAULT_VALUE;
+            $(GetRemindInputName(i)).value = REMINDER_DEFAULT_VALUE;
+          //  $(GetRemindInputName(i)).value = $(GetRemindInputName(i)).value + 1 - 1;
+
             $('label-event-remind').style.display = '';
             cnt++;
             break;
@@ -837,17 +834,19 @@ function GetCalendarList(requestIsOk) {
         index = SearchCalendarIndexById(eventInProcess.listId );
         if (index != -1) {
             $('combo-event-calendar').value = eventInProcess.listName;
+            OnCalendarChanged(false);
         }
     }
     else if (backGround.popupSettings.lastSelectedCalendar) {
         index = SearchCalendarIndexById(backGround.popupSettings.lastSelectedCalendar);
         if (index != -1) {
-            $('combo-event-calendar').selectedIndex = index;
+            $('combo-event-calendar').value = calendarLists[index].summary;
+            OnCalendarChanged(true);
         }
     }
-
-
-    OnCalendarChanged();
+    else {
+        OnCalendarChanged(true);
+    }
 
     if (currentState != ST_CONNECTED) {
         changeState(ST_CONNECTED);
@@ -891,7 +890,7 @@ function GetTaskLists(requestIsOk) {
     else if (backGround.popupSettings.lastSelectedTaskList) {
         index = SearchTaskListIndexById(backGround.popupSettings.lastSelectedTaskList);
         if (index != -1) {
-            $('combo-task-list').selectedIndex = index;
+            $('combo-task-list').value = taskLists[index].title;
         }
     }
 
@@ -1158,6 +1157,10 @@ function GetRemindComboName(i) {
     return "combo-event-remind-" + i.toString();
 }
 
+function GetRemindInputName(i) {
+    return "input-quantity-remind-" + i.toString();
+}
+
 function GetRemindMethodComboName(i) {
     return "combo-event-remind-method-" + i.toString();
 }
@@ -1285,6 +1288,11 @@ function AreAllEventFieldsValid() {
          $('combo-event-calendar').checkValidity() &&
          $('input-event-from-time').checkValidity() &&
          $('input-event-to-time').checkValidity() &&
+        ($(GetRemindDivName(1)).style.display == 'none' || $(GetRemindInputName(1)).checkValidity())  &&
+        ($(GetRemindDivName(2)).style.display == 'none' || $(GetRemindInputName(2)).checkValidity()) &&
+        ($(GetRemindDivName(3)).style.display == 'none' || $(GetRemindInputName(3)).checkValidity()) &&
+        ($(GetRemindDivName(4)).style.display == 'none' || $(GetRemindInputName(4)).checkValidity()) &&
+        ($(GetRemindDivName(5)).style.display == 'none' || $(GetRemindInputName(5)).checkValidity()) &&
         !addingEventInProcess) {
         return true;
     }
@@ -1330,11 +1338,37 @@ function OnEventFieldChanged(e) {
     SetButtonAddEventState();
 }
 
-function OnCalendarChanged() {
+function OnCalendarChangedCallback() {
+    OnCalendarChanged(false);
+}
+
+function OnCalendarChanged(restoreReminders) {
     var combo = $('combo-event-calendar');
     for (var i=0; i < combo.options.length; i++) {
         if (combo.value == combo.options[i].value) {
             $('td-color-calendar').style.backgroundColor = combo.options[i].style.color;
+
+            if (restoreReminders) {
+                var j;
+                for (j = 0; j < calendarLists.length; j++) {
+                    if (calendarLists[j].summary == combo.value) {
+                        break;
+                    }
+                }
+
+                var reminderTimeArray =  [];
+                var reminderTimeMethod = [];
+
+                if (j < calendarLists.length && calendarLists[j].defaultReminders) {
+                    for (var k = 0; k < calendarLists[j].defaultReminders.length; k++) {
+                        reminderTimeArray.push(calendarLists[j].defaultReminders[k].minutes);
+                        reminderTimeMethod.push(calendarLists[j].defaultReminders[k].method);
+                    }
+                }
+
+                RestoreReminders(reminderTimeArray, reminderTimeMethod);
+            }
+
             break;
         }
     }

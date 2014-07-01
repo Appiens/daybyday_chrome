@@ -312,8 +312,8 @@ function AddEvent(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd
         name = filterSpecialChar(name);
         place = filterSpecialChar(place);
         var recurrenceRule = BuildRecurrenceRule(recurrenceTypeValue);
-        var reminderTimeArrayMins = BuildReminderTimeArrayMins(reminderTimeArray);
-        var reminderMethodArrayTypes = BuildReminderTimeArrayMins(reminderMethodArray);
+        var reminderTimeArrayMins = reminderTimeArray; //BuildReminderTimeArrayMins(reminderTimeArray);
+        var reminderMethodArrayTypes = reminderMethodArray; //BuildReminderTimeArrayMins(reminderMethodArray);
 
         url  = 'https://www.googleapis.com/calendar/v3/calendars/' + listId + '/events';
 
