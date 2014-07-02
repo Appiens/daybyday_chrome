@@ -290,6 +290,7 @@ function RestoreEventInProcess() {
 
         $('label-event-remind').style.display = 'none';
 
+        // load reminders by default
         OnCalendarChanged(true);
     }
 
@@ -387,13 +388,22 @@ function AddEventHandlers() {
     $('href-day-by-day').addEventListener('click', OpenDayByDayTab);
     $('href-add-remind').addEventListener('click', AddReminderDiv);
 
-    var list=document.getElementsByTagName("a");
-    for (var i = 0; i < list.length; i++) {
-        if (list[i].id.substr(0, 16) != "div-event-remind") {
-            continue;
-        }
+//    var list=document.getElementsByTagName("a");
+//    for (var i = 0; i < list.length; i++) {
+//        if (list[i].id.substr(0, 16) != "div-event-remind") {
+//            continue;
+//        }
+//
+//        list[i].addEventListener('click', CloseReminderDiv);
+//        list[i].addEventListener('click', OnEventFieldChanged);
+//    }
 
-        list[i].addEventListener('click', CloseReminderDiv);
+    for (var i = 1; i <= REMINDER_MAX; i++) {
+        $(GetRemindHrefName(i)).addEventListener('click', CloseReminderDiv);
+        $(GetRemindHrefName(i)).addEventListener('click', OnEventFieldChanged);
+        $(GetRemindComboName(i)).addEventListener('change', OnEventFieldChanged);
+        $(GetRemindMethodComboName(i)).addEventListener('change', OnEventFieldChanged);
+        $(GetRemindInputName(i)).addEventListener('input', OnEventFieldChanged);
     }
 
     // input to task fields
@@ -656,8 +666,6 @@ function AddReminderDiv() {
             $(GetRemindComboName(i)).selectedIndex = 0;
             $(GetRemindInputName(i)).value = REMINDER_DEFAULT_VALUE;
             $(GetRemindInputName(i)).value = REMINDER_DEFAULT_VALUE;
-          //  $(GetRemindInputName(i)).value = $(GetRemindInputName(i)).value + 1 - 1;
-
             $('label-event-remind').style.display = '';
             cnt++;
             break;
@@ -1163,6 +1171,10 @@ function GetRemindInputName(i) {
 
 function GetRemindMethodComboName(i) {
     return "combo-event-remind-method-" + i.toString();
+}
+
+function GetRemindHrefName(i) {
+    return GetRemindDivName(i) + "-close";
 }
 
 /*
