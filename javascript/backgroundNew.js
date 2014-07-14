@@ -5,6 +5,11 @@
 // authorization module
 var oauthMine = new OAuth2(c_redirect_uri, c_client_id, c_scope);
 
+var loader = new Loader(oauthMine);
+
+// sprs
+var spr = new Spr();
+
 // popup win settings
 var popupSettings = new PopupSettings(-1, -1);
 
@@ -31,29 +36,18 @@ function updateView() {
         if (isTokenOk) {
             chrome.browserAction.setIcon({ 'path' : '../images/daybyday16.png'});
             chrome.browserAction.setPopup({popup : "views/Popup.html"});
+            loader.Load(false);
         }
         else {
             chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
             chrome.browserAction.setPopup({popup : ""});
-            taskLists = [];
-            calendarLists = [];
-            userName = null;
+//            taskLists = [];
+//            calendarLists = [];
+//            userName = null;
+            loader.Clear();
         }
     }
 
-    if (oauthMine.isTokenOk() && oauthMine.allowRequest()) {
-        if (taskLists.length == 0) {
-            AskForTaskLists(true);
-        }
-
-        if (calendarLists.length == 0) {
-            AskForCalendars(true);
-        }
-
-        if (!userName) {
-            AskForName(true);
-        }
-    }
 
 
     currTokenOk = isTokenOk;

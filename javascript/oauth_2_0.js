@@ -123,7 +123,7 @@ function OAuth2(redirect_uri, client_id, scope) {
         callback - the callback function
      */
     this.revoke = function(callback){
-        if (!parent.isTokenOk()) {
+        if (parent.token == null) {
             LogMsg('Revoke: token is bad or exprired');
             return;
         }

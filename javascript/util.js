@@ -2,7 +2,6 @@
  * Created by AstafyevaLA on 29.04.2014.
  */
 
-
 ST_REQUEST_OK = 200;
 TEXT_VALUE_SPLITTER = '$';
 
