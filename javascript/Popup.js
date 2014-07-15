@@ -26,6 +26,8 @@ function init() {
         backGround.LogMsg('Popup: disconnected');
     }
     else {
+            GetGoogleInfoFromBackGround();
+
             if (backGround.loader.isLoading()) {
                 changeState(popupData.windowStates.ST_CONNECTING);
                 backGround.LogMsg('Popup: disconnected');
@@ -33,28 +35,14 @@ function init() {
             else {
                 if (backGround.loader.isLoadedOk()) {
                     backGround.LogMsg('Popup: taking old vals');
-                    GetGoogleInfoFromBackGround();
+
                     changeState(popupData.windowStates.ST_CONNECTED);
                     backGround.loader.Load();
                 }
                 else {
-                    changeState(popupData.windowStates.ST_ERROR);
+                    changeState(popupData.windowStates.ST_CONNECTING);
                 }
             }
-//            if (backGround.taskLists != [] && backGround.userName != null && backGround.calendarLists != []) {
-//                backGround.LogMsg('Popup: taking old vals');
-//                GetGoogleInfoFromBackGround();
-//                changeState(popupData.windowStates.ST_CONNECTED);
-//
-//                // but asking for new ones for the next time
-//                GetGoogleInfo(false);
-//
-//            }
-//            else {
-//                backGround.LogMsg('Popup: reloading vals');
-//                changeState(popupData.windowStates.ST_CONNECTING);
-//                GetGoogleInfo(false);
-//            }
     }
 
     //fill combos
@@ -153,7 +141,6 @@ function RestoreEventInProcess() {
         // restoring repetition period
         if (eventInProcess.recurrenceTypeValue != null) {
             var index = backGround.spr.repetitionPeriodList.IndexOf(eventInProcess.recurrenceTypeValue);
-
             $('combo-repetition-interval').selectedIndex = index;
         }
 
@@ -313,7 +300,6 @@ function changeState(newState) {
     UpdateCurrentState();
 }
 
-/* updating current window state*/
 function UpdateCurrentState() {
     var currentState = popupData.windowStates.GetCurrentState();
     switch (currentState) {
@@ -344,7 +330,6 @@ function UpdateCurrentState() {
             SetAllElemsVisibility('hidden');
             ShowMessageToUser(backGround.spr.userMessages.MSG_ERROR);
             setTabsVisibility(false, false, false);
-            // DoLogOut();
             setTimeout(function() { window.close(); }, 1500);
             break;
         case popupData.windowStates.ST_SUCCESS:
@@ -356,42 +341,27 @@ function UpdateCurrentState() {
     }
 }
 
-/*
-    Activates Add Task tab page
-*/
 function GotoTaskTab() {
-    $('tab-add-task').className = 'SelectedTab';
-    $('tab-add-event').className = 'Tab';
-    $('tab-sign-in').className = 'Tab';
-    $('page-add-task').style.display = 'block';
-    $('page-add-event').style.display = 'none';
-    $('page-sign-in').style.display = 'none';
+    ActivateTab('tab-add-task', 'tab-sign-in', 'tab-add-event', 'page-add-task', 'page-sign-in', 'page-add-event');
     backGround.popupSettings.lastTab = popupData.windowTabs.TAB_TASK;
 }
 
-/*
- Activates Add event tab page
- */
 function GotoEventTab() {
-    $('tab-add-task').className = 'Tab';
-    $('tab-add-event').className = 'SelectedTab';
-    $('tab-sign-in').className = 'Tab';
-    $('page-add-task').style.display = 'none';
-    $('page-add-event').style.display = 'block';
-    $('page-sign-in').style.display = 'none';
+    ActivateTab('tab-add-event', 'tab-sign-in', 'tab-add-task', 'page-add-event', 'page-sign-in', 'page-add-task');
     backGround.popupSettings.lastTab = popupData.windowTabs.TAB_EVENT;
 }
 
-/*
- Activates Authorization tab page
- */
 function GotoAuthTab() {
-    $('tab-add-task').className = 'Tab';
-    $('tab-add-event').className = 'Tab';
-    $('tab-sign-in').className = 'SelectedTab';
-    $('page-add-task').style.display = 'none';
-    $('page-add-event').style.display = 'none';
-    $('page-sign-in').style.display = 'block';
+    ActivateTab('tab-sign-in', 'tab-add-task', 'tab-add-event', 'page-sign-in', 'page-add-task', 'page-add-event');
+}
+
+function ActivateTab(activeTabName, passiveTabName1, passiveTabName2, activePageName, passivePageName1, passivePageName2) {
+    $(passiveTabName1).className = 'Tab';
+    $(passiveTabName2).className = 'Tab';
+    $(activeTabName).className = 'SelectedTab';
+    $(passivePageName1).style.display = 'none';
+    $(passivePageName2).style.display = 'none';
+    $(activePageName).style.display = 'block';
 }
 
 /* set Tabs visibility
@@ -414,17 +384,11 @@ function ShowMessageToUser(message) {
     $('label-user-message').innerHTML = message;
 }
 
-/*
- Opens Google Calendar url
-*/
 function OpenCalTab() {
    backGround.trackEvent('Google calendar link', 'clicked');
    OpenTab("https://www.google.com/calendar/render");
 }
 
-/*
-  Opens Day by Day free url
- */
 function OpenDayByDayTab() {
     backGround.trackEvent('Day by day link', 'clicked');
     OpenTab("https://play.google.com/store/apps/details?id=ru.infteh.organizer.trial");
@@ -480,9 +444,6 @@ function MakeReminderMethodArray() {
     return reminderMethodArray;
 }
 
-/*
-    Closing reminder section when X is clicked
-*/
 function CloseReminderDiv(e) {
     var cnt = 0;
     var targ;
@@ -514,9 +475,6 @@ function CloseReminderDiv(e) {
     }
 }
 
-/*
-    Adding reminder section when link "Add a reminder" clicked
- */
 function AddReminderDiv() {
     var cnt = 0;
 
@@ -535,7 +493,6 @@ function AddReminderDiv() {
         }
         else
             cnt++;
-
     }
 
     if (cnt == RemindersLib.REMINDER_MAX) {
@@ -543,71 +500,20 @@ function AddReminderDiv() {
     }
 }
 
-// ask tasks lists and calendars from APIs
-function GetGoogleInfo(withAuth) {
-    if (withAuth) {
-        authAndGetTasks();
-    }
-    else {
-        getTasks();
-    }
-
-    getName();
-    getCalendars();
-}
-
 // taking task lists and calendars from background
 function GetGoogleInfoFromBackGround() {
-    popupData.taskLists = backGround.loader.taskLists;
-    popupData.calendarLists = backGround.loader.calendarLists;
-    popupData.userName
-    FillTaskListComboFromBackground();
-    GetUserName();
-    FillCalendarComboFromBackground();
-}
+    if (!backGround.loader.isLoadingTasks && backGround.loader.taskLists.length > 0) {
+        popupData.taskLists = backGround.loader.taskLists;
+        FillTaskListComboFromBackground();
+    }
 
-/* asking for tasks lists of an authorized user */
-function getTasks() {
-    if (backGround.oauthMine.allowRequest()) {
-        backGround.LogMsg('Popup: getTasks');
-        backGround.AskForTaskLists(true);
+    if (!backGround.loader.isLoadingCalendars && backGround.loader.calendarLists.length > 0) {
+        popupData.calendarLists = backGround.loader.calendarLists;
+        FillCalendarComboFromBackground();
     }
-    else {
-        setTimeout(getTasks, 1000);
-    }
-}
 
-/* asking for task lists with authorization (can select account) */
-function authAndGetTasks() {
-    if (/*backGround.oauthMine.allowRequest()*/ true == true) {
-        backGround.LogMsg('Popup: authAndGetTasks');
-        backGround.AuthAndAskForTaskLists();
-    }
-    else {
-        setTimeout(authAndGetTasks, 1000);
-    }
-}
-
-/* asking for users name of an authorized user*/
-function getName() {
-    if (backGround.oauthMine.allowRequest()) {
-            backGround.LogMsg('Popup: getName');
-            backGround.AskForName(true);
-
-    }
-    else {
-            setTimeout(getName, 1000);
-    }
-}
-
-/*asking for calendars of an authorized user*/
-function getCalendars() {
-    if (backGround.oauthMine.allowRequest()) {
-        backGround.LogMsg('Popup: getCalendars');
-        backGround.AskForCalendars(true);
-    }
-    else {
-        setTimeout(getCalendars, 1000);
+    if (!backGround.loader.isLoadingName) {
+        GetUserName();
     }
 }
 
@@ -623,7 +529,7 @@ function OnGotMessage(request, sender, sendResponse) {
         return;
         }
        else {
-           if (popupData.windowStates.GetCurrentState() != popupData.windowStates.ST_CONNECTED) {
+           if (popupData.windowStates.GetCurrentState() != popupData.windowStates.ST_CONNECTED && backGround.loader.isLoadedOk()) {
                changeState(popupData.windowStates.ST_CONNECTED);
            }
        }
@@ -634,13 +540,13 @@ function OnGotMessage(request, sender, sendResponse) {
         switch (request.greeting) {
             case "taskListReady":
                 if (popupData.taskLists.length == 0) {
-                    popupData.taskLists = backGround.taskLists;
+                    popupData.taskLists = backGround.loader.taskLists;
                     FillTaskListComboFromBackground();
                 }
                 break;
             case "calendarListReady":
                 if (popupData.calendarLists.length == 0) {
-                    popupData.calendarLists = backGround.calendarLists;
+                    popupData.calendarLists = backGround.loader.calendarLists;
                     FillCalendarComboFromBackground();
                 }
                 break;
@@ -705,15 +611,17 @@ function RestoreEventInProcessCombo() {
         index = popupData.SearchCalendarIndexById(eventInProcess.listId );
         if (index != -1) {
             $('combo-event-calendar').value = eventInProcess.listName;
-            OnCalendarChanged(false);
         }
+
+        OnCalendarChanged(false);
     }
     else if (backGround.popupSettings.lastSelectedCalendar) {
         index = popupData.SearchCalendarIndexById(backGround.popupSettings.lastSelectedCalendar);
         if (index != -1) {
             $('combo-event-calendar').value = popupData.calendarLists[index].summary;
-            OnCalendarChanged(true);
         }
+
+        OnCalendarChanged(true);
     }
     else {
         OnCalendarChanged(true);
@@ -725,7 +633,6 @@ function FillTaskListComboFromBackground() {
 
     var combo = $('combo-task-list');
     combo.options.length = 0;
-
 
     for (var i = 0, cal; cal = popupData.taskLists[i]; i++)
     {
@@ -760,9 +667,6 @@ function GetUserName() {
     $('label-account-name').innerHTML = backGround.loader.userName != null ?  backGround.loader.userName : backGround.spr.userMessages.MSG_UNAUTHORIZED;
 }
 
-/*
-    Add task action
-*/
 function DoAddTask() {
     if (!AreAllTaskfieldsValid()) {
         return;
@@ -784,30 +688,21 @@ function DoAddTask() {
     var date = $('checkbox-with-date').checked ?  $('input-task-date').value : null;
     var notes = $('input-task-comment').value;
 
-    backGround.AddTask(name, listId, date,  notes);
+    backGround.loader.addTask(name, listId, date,  notes);
 }
 
-/*
-   Clear Task Fields action
- */
 function DoClearTask() {
    backGround.popupSettings.ClearSavedTask();
    RestoreTaskInProcess();
    SetButtonAddTaskState();
 }
 
-/*
-    Clear Event Fields action
- */
 function DoClearEvent() {
     backGround.popupSettings.ClearSavedEvent();
     RestoreEventInProcess();
     SetButtonAddEventState();
 }
 
-/*
-    Add event action
- */
 function DoAddEvent() {
     if (!AreAllEventFieldsValid()) {
         return;
@@ -840,7 +735,7 @@ function DoAddEvent() {
     var reminderTimeArray = MakeReminderTimeArray();
     var reminderMethodArray = MakeReminderMethodArray();
 
-    backGround.AddEvent(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray);
+    backGround.loader.addEvent(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray);
 }
 
 /*
@@ -849,27 +744,7 @@ function DoAddEvent() {
 function DoAuthorize() {
     backGround.LogMsg('Popup: Authorize called');
     changeState(popupData.windowStates.ST_CONNECTING);
-    GetGoogleInfo(true);
-}
-
-/*
-    Logout action
-*/
-function DoLogOut() {
-    backGround.LogMsg('Popup: Revoke called');
-    backGround.oauthMine.revoke(OnLoggedout);
-}
-
-/*
-    Logout callback
- */
-function OnLoggedout() {
-    if (backGround.oauthMine.token == null) {
-        changeState(popupData.windowStates.ST_DISCONNECTED);
-    }
-    else {
-        changeState(popupData.windowStates.ST_ERROR);
-    }
+    backGround.loader.Load(true);
 }
 
 // Hides or shows all page elements
@@ -953,24 +828,20 @@ function LocalizePage() {
     Enables button button-add-task if task fields are valid
  */
 function SetButtonAddTaskState() {
-    if (AreAllTaskfieldsValid()) {
+    if (AreAllTaskfieldsValid())
         enableButton($('button-add-task'));
-    }
-    else {
+    else
         disableButton($('button-add-task'));
-    }
 }
 
 /*
     Enables button button-add-event if event fields are valid
  */
 function SetButtonAddEventState() {
-    if (AreAllEventFieldsValid()) {
+    if (AreAllEventFieldsValid())
         enableButton($('button-add-event'));
-    }
-    else {
+    else
         disableButton($('button-add-event'));
-    }
 }
 
 /*
@@ -1073,25 +944,10 @@ function OnCalendarChanged(restoreReminders) {
             $('td-color-calendar').style.backgroundColor = combo.options[i].style.color;
 
             if (restoreReminders) {
-
-                // TODO: make a function from this code
-                var j;
-                for (j = 0; j < popupData.calendarLists.length; j++) {
-                    if (popupData.calendarLists[j].summary == combo.value) {
-                        break;
-                    }
-                }
-
                 var reminderTimeArray =  [];
                 var reminderTimeMethod = [];
 
-                if (j < popupData.calendarLists.length && popupData.calendarLists[j].defaultReminders) {
-                    for (var k = 0; k < popupData.calendarLists[j].defaultReminders.length; k++) {
-                        reminderTimeArray.push(popupData.calendarLists[j].defaultReminders[k].minutes);
-                        reminderTimeMethod.push(popupData.calendarLists[j].defaultReminders[k].method);
-                    }
-                }
-
+                popupData.getDefaultRemindersByName(combo.value, reminderTimeArray, reminderTimeMethod);
                 RestoreReminders(reminderTimeArray, reminderTimeMethod);
             }
 

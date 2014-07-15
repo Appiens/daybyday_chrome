@@ -65,60 +65,6 @@ function OAuth2(redirect_uri, client_id, scope) {
     }
 
     /*
-     make OAuth request
-     boolean force - force authorization even if token is ok,
-     boolean blindMode - if we need interaction with a user, authorization fails = do noe show windows
-     boolean useSelectAccount - check account
-     */
-    this.authorizeNew = function(force, blindMode, useSelectAccount) {
-        if (parent.isAutorizing){
-            return;
-        }
-
-        // if token is ok we fire authorize event immediately
-        if (parent.isTokenOk() && !force) {
-            // we are authorized already we should raise authorization event
-            window.dispatchEvent(parent.authorizeEvent);
-            return;
-        }
-
-        parent.isAutorizing = true;
-        var request = useSelectAccount? parent.authRequestWithSelectAccount : parent.authRequest;
-
-        chrome.identity.launchWebAuthFlow(
-            {'url': request, 'interactive': !blindMode},
-            function(redirect_url) {
-                parent.token = null;
-                parent.tokenExpiresIn = 0;
-                parent.tokenGetTime = 0;
-
-                parent.userCancelledAuthorize = redirect_url == null || parseValue(redirect_url, 'error=', '&') == "access_denied";
-
-                if (redirect_url != null) {
-                    var stateFromRedirect = parseValue(redirect_url, 'state=', '&');
-
-                    if (stateFromRedirect != parent.state) {
-                        LogMsg("The states are different: " + parent.state + " " + stateFromRedirect);
-                        return;
-                    }
-                }
-
-                if (chrome.runtime.lastError) {
-                    LogMsg("authorizeError " + chrome.runtime.lastError.message);
-                    parent.isAutorizing = false;
-                    window.dispatchEvent(parent.authorizeEvent);
-                    return;
-                }
-
-                parent.token = parseValue(redirect_url, 'access_token=', '&');
-                parent.tokenExpiresIn = parseValue(redirect_url, 'expires_in=', '&');
-                parent.tokenGetTime = getCurrentTime()
-                parent.isAutorizing = false;
-                window.dispatchEvent(parent.authorizeEvent);
-            });
-    }
-
-    /*
         make token bad
         callback - the callback function
      */

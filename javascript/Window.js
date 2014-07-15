@@ -127,10 +127,26 @@ function PopupData() {
 
         return -1;
     }
+
+    this.getDefaultRemindersByName = function(calendarName, reminderTimeArray, reminderTimeMethod) {
+        var j;
+        for (j = 0; j < this.calendarLists.length; j++) {
+            if (popupData.calendarLists[j].summary == calendarName) {
+                break;
+            }
+        }
+
+        if (j < this.calendarLists.length && this.calendarLists[j].defaultReminders) {
+            for (var k = 0; k < this.calendarLists[j].defaultReminders.length; k++) {
+                reminderTimeArray.push(this.calendarLists[j].defaultReminders[k].minutes);
+                reminderTimeMethod.push(this.calendarLists[j].defaultReminders[k].method);
+            }
+        }
+
+    }
 }
 
 function Loader(oauth) {
-    this.currentState = new PopupStates();
     this.taskLists = [];
     this.calendarLists = [];
     this.userName = null;
@@ -165,6 +181,249 @@ function Loader(oauth) {
 
     this.isLoadedOk = function() {
         return !this.isLoading() && this.taskLists.length > 0 && this.calendarLists.length > 0 && this.userName != null;
+    }
+
+    /* Adds task to a task list */
+    /* string name - name of a task,
+     string listId - id of task list to add task,
+     string date - date of task (as a value of input date),
+     string notes - comment to task
+     */
+    this.addTask = function(name, listId, date, notes) {
+
+        if (!this.oauthMine.allowRequest())
+        {
+            LogMsg('Loader AddTask: another request is processing');
+            throw new Error('Loader AddTask: another request is processing');
+        }
+
+        var xhr = new XMLHttpRequest();
+        try
+        {
+            xhr.onreadystatechange = onAddTask(xhr);
+            xhr.onerror = function(error)
+            {
+                LogMsg('Loader AddTask: error: ' + error);
+                throw new Error(error);
+            };
+
+            if (date) {
+                date = date + 'T00:00:00Z';
+            }
+
+            notes = filterSpecialChar(notes);
+            name = filterSpecialChar(name);
+
+            url  = 'https://www.googleapis.com/tasks/v1/lists/' + listId + '/tasks';
+
+            xhr.open('POST', url);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            var params = date == null ? '{"title":"' + name + '","notes":"'+ notes + '"}' : '{"title":"' + name + '","due":"' + date + '","notes":"'+ notes + '"}';
+            this.oauthMine.setSignedRequest(xhr, params, true);
+        }
+        catch (e)
+        {
+            LogMsg('Loader AddTask ex: ' + e);
+            throw e;
+        }
+
+    }
+
+    /* Adds event to a calendar */
+    /* string name - name of an event,
+     string listId - id of calendar to add an event,
+     string timeZone - timeZone of the calendar
+     string dateStart - start date of an event (as a value of input datetime-local),
+     string dateEnd - end date of an event (as a value of input datetime-local),
+     string description - the description of an event,
+     boolean allDay - is this an all day event,
+     string place - place of an event,
+     string recurrenceTypeValue - elem of repetitionPeriods, null if don`t need repetition
+     array of string reminderTimeArray - subArray of remindersPeriods, [] if don`t need reminders
+     array of string reminderMethodArray - subArray of remindersMethods, [] if don`t need reminders
+     */
+    this.addEvent = function(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray) {
+        if (!this.oauthMine.allowRequest())
+        {
+            LogMsg('Loader AddEvent: another request is processing');
+            throw new Error('Loader AddEvent: another request is processing');
+        }
+
+        var xhr = new XMLHttpRequest();
+        try
+        {
+            xhr.onreadystatechange = onAddEvent(xhr);
+            xhr.onerror = function(error)
+            {
+                LogMsg('Loader AddEvent: error: ' + error);
+                throw new Error(error);
+            };
+
+            var timeStartLong = timeStart;
+
+            // time should be in a long format HH:MM:SS
+            if (timeStartLong.length == 5) {
+                timeStartLong += ':00';
+            }
+
+            var timeEndLong = timeEnd;
+
+            // time should be in a long format HH:MM:SS
+            if (timeEndLong.length == 5) {
+                timeEndLong += ':00';
+            }
+
+            var start = allDay? dateStart : dateStart + 'T' + timeStartLong  + GetTimeZoneOffsetStr(); //dateStart + ':00' + GetTimeZoneOffsetStr();
+            var end = allDay?  CurrDateStr(addDays(dateEnd, 1)): dateEnd + 'T' + timeEndLong  + GetTimeZoneOffsetStr(); // dateEnd + ':00' + GetTimeZoneOffsetStr();
+
+            LogMsg(start);
+            LogMsg(end);
+
+            description = filterSpecialChar(description);
+            name = filterSpecialChar(name);
+            place = filterSpecialChar(place);
+            var recurrenceRule = BuildRecurrenceRule(recurrenceTypeValue);
+            var reminderTimeArrayMins = reminderTimeArray; //BuildReminderTimeArrayMins(reminderTimeArray);
+            var reminderMethodArrayTypes = reminderMethodArray; //BuildReminderTimeArrayMins(reminderMethodArray);
+
+            url  = 'https://www.googleapis.com/calendar/v3/calendars/' + listId + '/events';
+
+            xhr.open('POST', url);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            var params = CreateEventParams(start, end, allDay, description, name, place, recurrenceRule, timeZone, recurrenceRule != null , reminderTimeArrayMins, reminderMethodArrayTypes);
+            this.oauthMine.setSignedRequest(xhr, params, true);
+        }
+        catch (e)
+        {
+            LogMsg('Loader AddEvent ex: ' + e);
+            throw e;
+        }
+    }
+
+    /* Creates params for an event*/
+    /*
+     string start - start date of an event (in correct format 2014-06-04T00:00:00+04),
+     string end - end date of an event (in correct format 2014-06-04T00:00:00+04),
+     boolean allDay - is this an all day event,
+     string description - the description of an event,
+     string name - the name of an event,
+     string place - place of an event,
+     string recurrenceRule - recurrenceRule in correct format RRULE:FREQ=WEEKLY,
+     string timeZone - time zone (used if all day event (Goodle requires) or addTimeZone flag is set)
+     boolean addTimeZone - true if we want to add time zone to start and end dates
+     array of string reminderTimeArrayMin - [5, 10, 60] remind before (in minutes), [] if don`t need reminders
+     array of string reminderMethodArrayTypes - [popup, sms, email] remind method, [] if don`t need reminders
+     */
+    var CreateEventParams = function(start, end, allDay, description, name, place, recurrenceRule, timeZone, addTimeZone, reminderTimeArrayMins, reminderMethodArrayTypes) {
+        var params = '{';
+
+        if (allDay) {
+            params += '"start": {"date": "' + start + '", "timeZone": "' + timeZone + '"}, "end": {"date": "' + end +'", "timeZone": "' + timeZone + '"}';
+        }
+        else
+        if (addTimeZone) {
+            params += '"end": {"dateTime": "' + end +'", "timeZone": "' + timeZone + '"},"start": {"dateTime": "' + start + '", "timeZone": "' + timeZone + '"}';
+        }
+        else {
+            params += '"end": {"dateTime": "' + end +'"},"start": {"dateTime": "' + start + '"}'
+        }
+
+        if (description) {
+            params += ',"description": "'+ description +'"';
+        }
+
+        if (name) {
+            params += ',"summary": "'+ name +'"';
+        }
+
+        if (place) {
+            params += ',"location": "'+ place +'"';
+        }
+
+        if (recurrenceRule) {
+            params += ',"recurrence": ["'+ recurrenceRule +'"]';
+        }
+
+        if (reminderTimeArrayMins.length > 0) {
+            params += ',"reminders": { "useDefault": false, "overrides": [';
+
+            for (var i = 0; i < reminderTimeArrayMins.length; i++) {
+                params +=  '{"method": "'+ reminderMethodArrayTypes[i] + '", "minutes": ' + reminderTimeArrayMins[i] + '}'
+
+                if (i < reminderTimeArrayMins.length - 1) {
+                    params += ','
+                }
+            }
+
+            params += ']}';
+        }
+        else {
+            params += ',"reminders": { "useDefault": false }';
+        }
+
+        params += '}';
+
+        return params;
+    }
+
+    /* Callback function for AddTask */
+    /*xhr - request*/
+    var onAddTask = function(xhr)
+    {
+        return function()
+        {
+            if (xhr.readyState != 4) {
+                return;
+            }
+
+            if (xhr.status != ST_REQUEST_OK) {
+                try {
+                    var text = xhr.response;
+                    var obj = JSON.parse(text);
+                    var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
+                    chrome.runtime.sendMessage({greeting: "AddedError", error: error, type: "task"});
+                    throw new Error(error);
+                }
+                catch (e) {
+                    LogMsg('ex: ' + e);
+                    throw e;
+                }
+            }
+            else {
+                //  taskInProcess = null;
+                chrome.runtime.sendMessage({greeting: "AddedOk", type: "task"});
+            }
+        };
+    }
+
+    /* Callback function for AddEvent */
+    /* xhr - request*/
+    var onAddEvent = function(xhr)
+    {
+        return function()
+        {
+            if (xhr.readyState != 4) {
+                return;
+            }
+
+            if (xhr.status != ST_REQUEST_OK) {
+                try {
+                    var text = xhr.response;
+                    var obj = JSON.parse(text);
+                    var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
+                    chrome.runtime.sendMessage({greeting: "AddedError", error: error, type: "event"});
+                    throw new Error(error);
+                }
+                catch (e) {
+                    LogMsg('ex: ' + e);
+                    throw e;
+                }
+            }
+            else {
+                // eventInProcess = null;
+                chrome.runtime.sendMessage({greeting: "AddedOk", type: "event"});
+            }
+        };
     }
 
     /* asking for tasks lists of an authorized user */
@@ -350,7 +609,7 @@ function Loader(oauth) {
             }
             finally {
                 // sending a message to popup window
-                //chrome.runtime.sendMessage({greeting: "taskListReady", isOk: isOk});
+                chrome.runtime.sendMessage({greeting: "taskListReady", isOk: isOk});
                 parent.isLoadingTasks = false;
             }
         }
@@ -380,7 +639,7 @@ function Loader(oauth) {
             }
             finally {
                 // sending a message to popup window
-                // chrome.runtime.sendMessage({greeting: "calendarListReady", isOk: isOk});
+                chrome.runtime.sendMessage({greeting: "calendarListReady", isOk: isOk});
                 parent.isLoadingCalendars = false;
             }
         }
@@ -411,7 +670,7 @@ function Loader(oauth) {
             }
             finally {
                 // sending a message to popup window
-                //chrome.runtime.sendMessage({greeting: "userNameReady", isOk: isOk});
+                chrome.runtime.sendMessage({greeting: "userNameReady", isOk: isOk});
                 parent.isLoadingName = false;
             }
         }
