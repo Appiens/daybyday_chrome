@@ -19,6 +19,7 @@
     "error_message":{"message": "Упс... Произошла ошибка"},
     "success_message":{"message": "Успешно завершено!"},
     "unauthorized_message": {"message": "Пожалуйста, авторизуйтесь!"},
+    "askformark_message": {"message": "Эй, приятель, ты используешь расширение некоторое время! Пожалуйста, оцени нас."},
     "add_task_action_title":{"message": "Сохранить"},
     "add_event_action_title":{"message": "Сохранить"},
     "clear_task_action_title": {"message": "Сброс"},

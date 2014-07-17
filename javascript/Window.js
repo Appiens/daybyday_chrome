@@ -8,6 +8,7 @@ function Messages() {
     this.MSG_ERROR = chrome.i18n.getMessage('error_message'); // // error message
     this.MSG_SUCCESS = chrome.i18n.getMessage('success_message'); // success message (after adding task or event)
     this.MSG_UNAUTHORIZED = chrome.i18n.getMessage('unauthorized_message'); // no authorization message
+    this.MSG_ASKFORMARK = chrome.i18n.getMessage('askformark_message'); // ask for mark message
 }
 
 function PopupStates() {
@@ -17,11 +18,12 @@ function PopupStates() {
     this.ST_DISCONNECTED = 3; // no connection
     this.ST_ERROR = 4; // some error occured
     this.ST_SUCCESS = 5; // the action was completed successfully
+    this.ST_ASKFORMARK = 6;
 
     var state = this.ST_START;
 
     this.SetCurrentState = function(st) {
-        if (st < this.ST_START || st > this.ST_SUCCESS) {
+        if (st < this.ST_START || st > this.ST_ASKFORMARK) {
             throw new Error("Wrong popup state " + st + "!");
         }
 

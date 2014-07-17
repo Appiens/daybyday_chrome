@@ -167,6 +167,27 @@ input[type=button]:disabled {
     margin-top:5px;
 }
 
+.button-style {
+    background-color: #DFEEFF;
+    text-indent:0px;
+    border:1px solid #0099CC;
+    display:inline-block;
+    color:#14396a;
+    font-weight:normal;
+    font-style:normal;
+    height:25px;
+    line-height:25px;
+    width:95%;
+    text-decoration:none;
+    text-align:center;
+    margin-bottom:5px;
+    margin-top:5px;
+}
+
+.button-style:hover {
+    background-color:#33B5E5;
+}
+
 .new-select-style-wpandyou select, textarea, input {
      font-family: Arial;
      width:97%;

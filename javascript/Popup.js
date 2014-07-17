@@ -1,4 +1,4 @@
-/**
+  /**
  * Created by AstafyevaLA on 29.04.2014.
  */
 var popupData = new PopupData();
@@ -42,6 +42,10 @@ function init() {
                 else {
                     changeState(popupData.windowStates.ST_CONNECTING);
                 }
+            }
+
+            if (getRandomInt(0, 3) == 2 && popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTED) {
+                changeState(popupData.windowStates.ST_ASKFORMARK);
             }
     }
 
@@ -338,7 +342,63 @@ function UpdateCurrentState() {
             setTabsVisibility(false, false, false);
             setTimeout(function() { window.close(); }, 1500);
             break;
+        case popupData.windowStates.ST_ASKFORMARK:
+            SetAllElemsVisibility('hidden');
+            ShowMessageToUser(backGround.spr.userMessages.MSG_ASKFORMARK);
+            setTabsVisibility(false, false, false);
+            fillTableAskForMark();
+            break;
     }
+}
+
+// Shorthand for document.querySelector.
+function select(selector) {
+    return document.querySelector(selector);
+}
+
+function clearTableAskForMark() {
+    var table = select("#buttons-ask-for-mark");
+    while (table.rows.length > 0) {
+        table.deleteRow(table.rows.length - 1);
+    }
+
+    $('div-ask-for-name').style.display='none';
+}
+
+function fillTableAskForMark() {
+    $('div-ask-for-name').style.display='';
+    var table = select("#buttons-ask-for-mark");
+
+    var buttonOk = document.createElement("button");
+    buttonOk.innerText = "Ok";
+    buttonOk.onclick = function(){
+            backGround.LogMsg('Ok pressed');
+            OpenTab("https://chrome.google.com/webstore/detail/day-by-day/loopacbjaigjkjdhjfkhebdhfgdmgjdc/reviews");
+            clearTableAskForMark();
+            changeState(popupData.windowStates.ST_CONNECTED);
+    };
+
+    var buttonCancel = document.createElement("button");
+    buttonCancel.innerText = "Cancel";
+    buttonCancel.onclick = function(){
+            backGround.LogMsg('Cancel pressed');
+            clearTableAskForMark();
+            changeState(popupData.windowStates.ST_CONNECTED);
+    };
+
+    var row = table.insertRow(-1);
+    var cell = row.insertCell(-1);
+    cell.style.width = '6%';
+    var cell = row.insertCell(-1);
+    cell.appendChild(buttonOk);
+    cell.style.width = '47%';
+    cell.style.textAlign = 'center';
+    buttonOk.setAttribute("class", "button-style");
+    var cell = row.insertCell(-1);
+    cell.style.width = '47%';
+    cell.style.textAlign = 'center';
+    cell.appendChild(buttonCancel);
+    buttonCancel.setAttribute("class", "button-style");
 }
 
 function GotoTaskTab() {
@@ -529,7 +589,9 @@ function OnGotMessage(request, sender, sendResponse) {
         return;
         }
        else {
-           if (popupData.windowStates.GetCurrentState() != popupData.windowStates.ST_CONNECTED && backGround.loader.isLoadedOk()) {
+           if (popupData.windowStates.GetCurrentState() != popupData.windowStates.ST_CONNECTED &&
+               backGround.loader.isLoadedOk() &&
+               popupData.windowStates.GetCurrentState() != popupData.windowStates.ST_ASKFORMARK) {
                changeState(popupData.windowStates.ST_CONNECTED);
            }
        }
@@ -751,10 +813,10 @@ function DoAuthorize() {
 // string visibility = 'visible' || 'hidden'
 function SetAllElemsVisibility(visibility) {
     $('page-add-task').style.visibility = visibility;
-    $('page-add-event').style.visibility = visibility;
+    $('page-add-event').style.display = visibility == 'visible'? '':'none';
     $('page-sign-in').style.visibility = visibility;
-    $('href-google-cal').style.visibility = visibility;
-    $('href-day-by-day').style.visibility = visibility;
+    $('href-google-cal').style.display = visibility == 'visible'? '':'none';
+    $('href-day-by-day').style.display = visibility == 'visible'? '': 'none';
 }
 
 /*localize page to current language*/

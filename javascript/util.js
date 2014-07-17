@@ -305,6 +305,12 @@ function timeDiff(first, second) {
     return (secondDate.getHours() - firstDate.getHours())*60 + (secondDate.getMinutes() - firstDate.getMinutes());
 }
 
+function getRandomInt(min, max)
+{
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+
 
 
 

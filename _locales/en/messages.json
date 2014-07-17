@@ -19,6 +19,7 @@
     "error_message": {"message": "Oops... Some error occured"},
     "success_message": {"message": "Completed successfully!"},
     "unauthorized_message": {"message": "Please, sign in!"},
+    "askformark_message": {"message": "Hey, guy, you are using the extenison for some time! Please, give us a mark."},
     "add_task_action_title": {"message": "Save"},
     "add_event_action_title": {"message": "Save"},
     "clear_task_action_title": {"message": "Discard"},
