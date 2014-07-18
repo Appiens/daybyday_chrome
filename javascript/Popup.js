@@ -44,13 +44,8 @@ function init() {
                 }
             }
 
-//            if (getRandomInt(0, 3) == 2 && popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTED) {
-//                changeState(popupData.windowStates.ST_ASKFORMARK);
-//            }
             backGround.markCounter.readValueFromCookie();
 
-            backGround.LogMsg("checkReadOk: " + backGround.markCounter.checkReadOk());
-            backGround.LogMsg("checkMaximum: " + backGround.markCounter.checkMaximum());
             if (backGround.markCounter.checkReadOk() && backGround.markCounter.checkMaximum() && popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTED) {
                 changeState(popupData.windowStates.ST_ASKFORMARK);
             }
@@ -381,6 +376,7 @@ function fillTableAskForMark() {
     buttonOk.innerText = "Ok";
     buttonOk.onclick = function(){
             backGround.LogMsg('Ok pressed');
+            backGround.trackEvent('Add mark ok', 'clicked');
             backGround.markCounter.stop();
             OpenTab("https://chrome.google.com/webstore/detail/day-by-day/loopacbjaigjkjdhjfkhebdhfgdmgjdc/reviews");
             setTimeout(function() { window.close(); }, 1500);
@@ -390,6 +386,7 @@ function fillTableAskForMark() {
     buttonCancel.innerText = "Cancel";
     buttonCancel.onclick = function(){
             backGround.LogMsg('Cancel pressed');
+            backGround.trackEvent('Add mark cancel', 'clicked');
             backGround.markCounter.stop();
             clearTableAskForMark();
             changeState(popupData.windowStates.ST_CONNECTED);

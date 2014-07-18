@@ -4,12 +4,14 @@
 
 function MarkCounter(maxNumber) {
     this.MaxNumber = maxNumber;
-    var currentNumber = 0;
+
     var cookieName = chrome.runtime.id;
     var cookieUrl = "http://developer.chrome.com/extensions/cookies.html";
-    var isReadOk = false;
+
     var offset = 10;
     var self = this;
+    self.isReadOk = false;
+    self.currentNumber = 0;
 
     this.readValueFromCookie = function() {
         chrome.cookies.get({
