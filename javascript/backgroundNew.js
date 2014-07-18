@@ -5,7 +5,11 @@
 // authorization module
 var oauthMine = new OAuth2(c_redirect_uri, c_client_id, c_scope);
 
+// task lists' and calendars' loader
 var loader = new Loader(oauthMine);
+
+// keeps the number of successfully added tasks and events to ask for mark
+var markCounter = new MarkCounter(10);
 
 // sprs
 var spr = new Spr();
@@ -32,9 +36,6 @@ function updateView() {
         else {
             chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
             chrome.browserAction.setPopup({popup : ""});
-//            taskLists = [];
-//            calendarLists = [];
-//            userName = null;
             loader.Clear();
         }
     }

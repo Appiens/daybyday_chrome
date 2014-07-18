@@ -44,7 +44,14 @@ function init() {
                 }
             }
 
-            if (getRandomInt(0, 3) == 2 && popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTED) {
+//            if (getRandomInt(0, 3) == 2 && popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTED) {
+//                changeState(popupData.windowStates.ST_ASKFORMARK);
+//            }
+            backGround.markCounter.readValueFromCookie();
+
+            backGround.LogMsg("checkReadOk: " + backGround.markCounter.checkReadOk());
+            backGround.LogMsg("checkMaximum: " + backGround.markCounter.checkMaximum());
+            if (backGround.markCounter.checkReadOk() && backGround.markCounter.checkMaximum() && popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTED) {
                 changeState(popupData.windowStates.ST_ASKFORMARK);
             }
     }
@@ -102,6 +109,7 @@ window.onunload = function() {
     backGround.popupSettings.lastSelectedCalendar = popupData.getCalendarIdByName($('combo-event-calendar').value);
 
     backGround.popupSettings.SetStartKeepingTime();
+    backGround.markCounter.writeValueToCookie();
 }
 
 /* when popup closes edited task is saved in the taskInProcess variable */
@@ -373,15 +381,16 @@ function fillTableAskForMark() {
     buttonOk.innerText = "Ok";
     buttonOk.onclick = function(){
             backGround.LogMsg('Ok pressed');
+            backGround.markCounter.stop();
             OpenTab("https://chrome.google.com/webstore/detail/day-by-day/loopacbjaigjkjdhjfkhebdhfgdmgjdc/reviews");
-            clearTableAskForMark();
-            changeState(popupData.windowStates.ST_CONNECTED);
+            setTimeout(function() { window.close(); }, 1500);
     };
 
     var buttonCancel = document.createElement("button");
     buttonCancel.innerText = "Cancel";
     buttonCancel.onclick = function(){
             backGround.LogMsg('Cancel pressed');
+            backGround.markCounter.stop();
             clearTableAskForMark();
             changeState(popupData.windowStates.ST_CONNECTED);
     };
@@ -589,9 +598,8 @@ function OnGotMessage(request, sender, sendResponse) {
         return;
         }
        else {
-           if (popupData.windowStates.GetCurrentState() != popupData.windowStates.ST_CONNECTED &&
-               backGround.loader.isLoadedOk() &&
-               popupData.windowStates.GetCurrentState() != popupData.windowStates.ST_ASKFORMARK) {
+           if (popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTING &&
+               backGround.loader.isLoadedOk()) {
                changeState(popupData.windowStates.ST_CONNECTED);
            }
        }
@@ -628,6 +636,7 @@ function OnGotMessage(request, sender, sendResponse) {
                     SetButtonAddEventState();
                 }
 
+                backGround.markCounter.addToCurr(1);
                 changeState(popupData.windowStates.ST_SUCCESS);
                 break;
             case "AddedError":
