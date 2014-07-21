@@ -29,6 +29,8 @@
     "authorize_tab_title": {"message": "Authorization"},
     "logout_action_title": {"message": "Log out"},
     "revoke_action_title": {"message": "Revoke"},
+    "markok_action_title": {"message": "Ok"},
+    "markcancel_action_title": {"message": "Cancel"},
     "revoke_rights_action_title": {"message": "Take permissions away from app"},
     "event_name": {"message": "Untitled event"},
     "event_start_date_title": {"message": "from"},

@@ -9,7 +9,8 @@ var oauthMine = new OAuth2(c_redirect_uri, c_client_id, c_scope);
 var loader = new Loader(oauthMine);
 
 // keeps the number of successfully added tasks and events to ask for mark
-var markCounter = new MarkCounter(10);
+var markCounter = new MarkCounterBool(5);
+
 
 // sprs
 var spr = new Spr();

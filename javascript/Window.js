@@ -9,6 +9,8 @@ function Messages() {
     this.MSG_SUCCESS = chrome.i18n.getMessage('success_message'); // success message (after adding task or event)
     this.MSG_UNAUTHORIZED = chrome.i18n.getMessage('unauthorized_message'); // no authorization message
     this.MSG_ASKFORMARK = chrome.i18n.getMessage('askformark_message'); // ask for mark message
+    this.MSG_MARKOK = chrome.i18n.getMessage('markok_action_title'); // ask for mark message
+    this.MSG_MARKCANCEL = chrome.i18n.getMessage('markcancel_action_title'); // ask for mark message
 }
 
 function PopupStates() {

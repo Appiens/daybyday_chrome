@@ -29,6 +29,8 @@
     "authorize_tab_title":{"message": "Авторизация"},
     "logout_action_title":{"message": "Выход"},
     "revoke_action_title":{"message": "Забрать"},
+    "markok_action_title": {"message": "Оценить"},
+    "markcancel_action_title": {"message": "Отмена"},
     "revoke_rights_action_title":{"message": "Забрать разрешения у приложения"},
     "event_name":{"message": "Заголовок"},
     "event_start_date_title":{"message": "Начало"},

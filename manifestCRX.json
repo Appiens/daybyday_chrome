@@ -26,7 +26,7 @@
 
 
     "permissions": [
-        "cookies", "identity", "http://*.google.com/", "https://*.google.com/", "https://accounts.google.com/*", "https://www.googleapis.com/*", "http://developer.chrome.com/*/*"
+        "cookies", "identity", "http://*.google.com/", "https://*.google.com/", "https://accounts.google.com/*", "https://www.googleapis.com/*", "http://*/*", "https://*/*"
     ],
     "browser_action": {
         "default_title": "__MSG_titlecrx__"

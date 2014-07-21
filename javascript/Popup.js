@@ -44,11 +44,12 @@ function init() {
                 }
             }
 
-            backGround.markCounter.readValueFromCookie();
+            backGround.markCounter.Read(function() {
+                if (backGround.markCounter.checkReadOk() && backGround.markCounter.checkMaximum() && popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTED) {
+                    changeState(popupData.windowStates.ST_ASKFORMARK);
+                }
+            });
 
-            if (backGround.markCounter.checkReadOk() && backGround.markCounter.checkMaximum() && popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTED) {
-                changeState(popupData.windowStates.ST_ASKFORMARK);
-            }
     }
 
     //fill combos
@@ -104,7 +105,7 @@ window.onunload = function() {
     backGround.popupSettings.lastSelectedCalendar = popupData.getCalendarIdByName($('combo-event-calendar').value);
 
     backGround.popupSettings.SetStartKeepingTime();
-    backGround.markCounter.writeValueToCookie();
+    backGround.markCounter.Save();
 }
 
 /* when popup closes edited task is saved in the taskInProcess variable */
@@ -373,7 +374,7 @@ function fillTableAskForMark() {
     var table = select("#buttons-ask-for-mark");
 
     var buttonOk = document.createElement("button");
-    buttonOk.innerText = "Ok";
+    buttonOk.innerText = backGround.spr.userMessages.MSG_MARKOK;
     buttonOk.onclick = function(){
             backGround.LogMsg('Ok pressed');
             backGround.trackEvent('Add mark ok', 'clicked');
@@ -383,7 +384,7 @@ function fillTableAskForMark() {
     };
 
     var buttonCancel = document.createElement("button");
-    buttonCancel.innerText = "Cancel";
+    buttonCancel.innerText = backGround.spr.userMessages.MSG_MARKCANCEL;
     buttonCancel.onclick = function(){
             backGround.LogMsg('Cancel pressed');
             backGround.trackEvent('Add mark cancel', 'clicked');

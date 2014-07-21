@@ -5,15 +5,19 @@
 function MarkCounter(maxNumber) {
     this.MaxNumber = maxNumber;
 
-    var cookieName = chrome.runtime.id;
-    var cookieUrl = "http://developer.chrome.com/extensions/cookies.html";
+    var cookieName = chrome.runtime.id + '_asked';
+    var cookieUrl = "https://github.com/Appiens/daybyday_chrome/tralyalya"; //"http://developer.chrome.com/extensions/cookies.html";
 
     var offset = 10;
     var self = this;
     self.isReadOk = false;
     self.currentNumber = 0;
+    self.cookieNumber = 0;
 
-    this.readValueFromCookie = function() {
+    this.readValueFromCookie = function(callback) {
+        self.currentNumber = 0;
+        self.cookieNumber = 0;
+
         chrome.cookies.get({
             "name": cookieName,
             "url": cookieUrl
@@ -29,7 +33,9 @@ function MarkCounter(maxNumber) {
 
             try {
                 self.currentNumber = parseInt(cookie.value);
+                self.cookieNumber = self.currentNumber;
                 self.isReadOk = true;
+                callback();
             }
             catch(e) {
                 self.isReadOk = false;
@@ -38,6 +44,10 @@ function MarkCounter(maxNumber) {
     }
 
     this.writeValueToCookie = function() {
+        if (self.cookieNumber >=  this.MaxNumber + offset) {
+            return;
+        }
+
         chrome.cookies.set({
             "name": cookieName,
             "url": cookieUrl,
