@@ -2,57 +2,52 @@
  * Created by AstafyevaLA on 24.04.2014.
  */
 
-// authorization module
-var oauthMine = new OAuth2(c_redirect_uri, c_client_id, c_scope);
-
-// task lists' and calendars' loader
-var loader = new Loader(oauthMine);
+var loader2 = new Loader2();
 
 // keeps the number of successfully added tasks and events to ask for mark
 var markCounter = new MarkCounterBool(5);
-
 
 // sprs
 var spr = new Spr();
 
 // popup win settings
-var popupSettings = new PopupSettings(-1, -1);
-
-// current token ok
-var currTokenOk = false;
+var popupSettings = new PopupSettings();
 
 // google analytics
 var _gaq;
 
 /* updating icon and popup page */
 function updateView() {
-    var isTokenOk = oauthMine.token != null; //oauthMine.isTokenOk();
+    var isTokenOk = loader2.TokenNotNull();
 
-    if (currTokenOk != isTokenOk) {
-        if (isTokenOk) {
-            chrome.browserAction.setIcon({ 'path' : '../images/daybyday16.png'});
-            chrome.browserAction.setPopup({popup : "views/Popup.html"});
-            loader.Load(false);
-        }
-        else {
-            chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
-            chrome.browserAction.setPopup({popup : ""});
-            loader.Clear();
-        }
+    if (isTokenOk) {
+        chrome.browserAction.setIcon({ 'path' : '../images/daybyday16.png'});
+        chrome.browserAction.setPopup({popup : "views/Popup.html"});
+        loader2.Load(false);
     }
-
-    currTokenOk = isTokenOk;
+    else {
+        chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
+        chrome.browserAction.setPopup({popup : ""});
+        loader2.Clear();
+    }
 };
 
 /* Ask for task lists with select Google account*/
 /* the result is put to calendar lists*/
 function AuthAndAskForTaskLists() {
-    loader.Load(true);
+   // loader.Load(true);
+    loader2.Load(true);
 }
 
 /* Logs msg*/
 function LogMsg(message) {
     console.log(GetDateTimeStr() + ' ' + message);
+}
+
+function OnGotMessage(request, sender, sendResponse) {
+    if (request.greeting && request.greeting == "token") {
+       updateView();
+    }
 }
 
 /* Background page initialization*/
@@ -71,11 +66,11 @@ function init () {
     })();
 
     updateView();
-    oauthMine.init();
-    window.setInterval(updateView, 1000);
     chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
     chrome.browserAction.onClicked.addListener(AuthAndAskForTaskLists);
-    oauthMine.authorize(false, true, false);
+    chrome.runtime.onMessage.addListener(OnGotMessage);
+    loader2.requestProcessor.Init();
+    loader2.requestProcessor.Authorize();
 }
 
 window.addEventListener('load', init, false);

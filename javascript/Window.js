@@ -637,7 +637,7 @@ function Loader(oauth) {
             }
             catch (e) {
                 LogMsg('Loader onGotCalendars ex: ' + e);
-                this.calendarLists = [];
+                parent.calendarLists = [];
                 isOk = false;
                 throw e;
             }
@@ -668,7 +668,7 @@ function Loader(oauth) {
             }
             catch (e) {
                 LogMsg('Loader onGotName ex: ' + e);
-                this.userName = null;
+                parent.userName = null;
                 isOk = false;
                 throw e;
             }

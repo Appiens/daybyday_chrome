@@ -7,7 +7,6 @@ window.addEventListener('load', init, false);
 
 var backGround;
 
-var currTokenOk = false;
 
 /**
  * Sets the value of multiple calendar checkbox based on value from
@@ -21,28 +20,27 @@ function init() {
     $('buttonRevokeText').innerHTML= chrome.i18n.getMessage('revoke_rights_action_title');
     $('extensionName').innerHTML = chrome.i18n.getMessage('name');
     document.querySelector('#buttonRevoke').addEventListener('click', revokeIt);
-
-    window.setInterval(updateView, 3000);
+    chrome.runtime.onMessage.addListener(OnGotMessage);
+    updateView();
 };
 
 function revokeIt() {
-    backGround.oauthMine.revokeAuth();
+    backGround.loader2.requestProcessor.Revoke(updateView);
 };
 
-function updateView() {
-    var tokenOk = backGround.oauthMine.isTokenOk();
+function OnGotMessage(request, sender, sendResponse) {
+    if (request.greeting && request.greeting == "token") {
+        updateView();
+    }
+}
 
-    if (tokenOk && !currTokenOk) {
-        enableButton($('buttonRevoke'));
-        currTokenOk = true;
+function updateView() {
+    if (backGround.loader2.IsRevoked() || !backGround.loader2.TokenNotNull()) {
+        disableButton($('buttonRevoke'));
     }
     else {
-        if (!tokenOk && currTokenOk) {
-            disableButton($('buttonRevoke'));
-            currTokenOk = false;
-        }
+        enableButton($('buttonRevoke'));
     }
-
 }
 
 

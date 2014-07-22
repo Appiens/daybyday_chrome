@@ -3,13 +3,13 @@
  */
 
 // saving settings of popup win after it closes
-function PopupSettings(lastState, lastTab) {
+function PopupSettings() {
 
     // keeps popup window state after it closes
-    this.lastState = lastState;
+    this.lastState = -1;
 
     // keeps popup last selected tab after it closes
-    this.lastTab = lastTab;
+    this.lastTab = -1;
 
     // keeps last selected calendar
     this.lastSelectedCalendar = null;
