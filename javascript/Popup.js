@@ -79,7 +79,14 @@ window.onunload = function() {
           taskInProcess.name = $('input-task-name').value;
           taskInProcess.listName = $('combo-task-list').value;
           taskInProcess.listId = popupData.getTaskIdByName(taskInProcess.listName);
-          taskInProcess.date =  $('checkbox-with-date').checked ? $('input-task-date').value : null;
+//          taskInProcess.date =  $('checkbox-with-date').checked ? $('input-task-date').value : null;
+          if ($('checkbox-with-date').checked) {
+              if (taskInProcess.date == null) {
+                  taskInProcess.date = new MyDate();
+              }
+                  taskInProcess.date.setFromInputValue($('input-task-date').value);
+          }
+
           taskInProcess.notes = $('input-task-comment').value;
           taskInProcess.notesRows = $('input-task-comment').style.height;
     }
@@ -89,10 +96,14 @@ window.onunload = function() {
          eventInProcess.name = $('input-event-name').value;
          eventInProcess.listName = $('combo-event-calendar').value;
          eventInProcess.listId = popupData.getCalendarIdByName(eventInProcess.listName);
-         eventInProcess.dateStart = $('input-event-from').value;
-         eventInProcess.dateEnd = $('input-event-to').value;
-         eventInProcess.timeStart = $('input-event-from-time').value;
-         eventInProcess.timeEnd = $('input-event-to-time').value;
+         eventInProcess.dateStart = new MyDate();
+         eventInProcess.dateStart.setFromInputValue($('input-event-from').value);
+         eventInProcess.dateEnd = new MyDate();
+         eventInProcess.dateEnd.setFromInputValue($('input-event-to').value);
+         eventInProcess.timeStart = new MyTime();
+         eventInProcess.timeStart.setFromInputValue($('input-event-from-time').value);
+         eventInProcess.timeEnd = new MyTime();
+         eventInProcess.timeEnd.setFromInputValue($('input-event-to-time').value);
          eventInProcess.description = $('input-event-comment').value;
          eventInProcess.allDay = $('checkbox-all-day').checked;
          eventInProcess.place = $('input-event-place').value;
@@ -113,17 +124,20 @@ window.onunload = function() {
 /* this function restores this task in edit boxes*/
 /* if we don`t have task to restore, function sets default values to task fields*/
 function RestoreTaskInProcess() {
+    var myDate = new MyDate();
+    myDate.setStartNextHour();
+
     if (backGround.popupSettings.SavedTaskExists()) {
         var taskInProcess = backGround.popupSettings.GetSavedTask();
         $('input-task-name').value = taskInProcess.name;
-        $('input-task-date').value = taskInProcess.date != null ? taskInProcess.date : CurrDateStrOffset(new Date());
+        $('input-task-date').value = taskInProcess.date != null ? taskInProcess.date.toInputValue() : /*CurrDateStrOffset(new Date())*/ myDate.toInputValue();
         $('input-task-comment').value = taskInProcess.notes;
         $('checkbox-with-date').checked = taskInProcess.date != null;
         $('input-task-date').style.display = taskInProcess.date != null ? '': 'none';
     }
     else {
         $('input-task-name').value = '';
-        $('input-task-date').value = CurrDateStrOffset(new Date());
+        $('input-task-date').value = /*CurrDateStrOffset(new Date());*/ myDate.toInputValue();
         $('input-task-comment').value = '';
         $('checkbox-with-date').checked = true;
         $('input-task-date').style.display = '';
@@ -134,13 +148,14 @@ function RestoreTaskInProcess() {
 /* this function restores this event in edit boxes*/
 /* if we don`t have event to restore, function sets default values to event fields */
 function RestoreEventInProcess() {
+
     if (backGround.popupSettings.SavedEventExists()) {
         var eventInProcess = backGround.popupSettings.GetSavedEvent();
         $('input-event-name').value = eventInProcess.name;
-        $('input-event-from').value = eventInProcess.dateStart;
-        $('input-event-to').value= eventInProcess.dateEnd;
-        $('input-event-from-time').value = eventInProcess.timeStart;
-        $('input-event-to-time').value= eventInProcess.timeEnd;
+        $('input-event-from').value = eventInProcess.dateStart.toInputValue();
+        $('input-event-to').value= eventInProcess.dateEnd.toInputValue();
+        $('input-event-from-time').value = eventInProcess.timeStart.toInputValue();
+        $('input-event-to-time').value= eventInProcess.timeEnd.toInputValue();
         $('input-event-comment').value = eventInProcess.description;
         $('checkbox-all-day').checked = eventInProcess.allDay;
         $('input-event-place').value = eventInProcess.place;
@@ -157,14 +172,20 @@ function RestoreEventInProcess() {
     }
     else {
         // default value
-        var today = new Date();
-        var todayHourLater = addHours(today, 1);
+        var todayDate = new MyDate();
+        todayDate.setStartNextHour();
+        var todayTime = new MyTime();
+        todayTime.setStartNextHour();
         // default values current date next hour - current date next hour + one hour
         $('input-event-name').value = '';
-        $('input-event-from').value = CurrDateStrOffset(today);
-        $('input-event-from-time').value = CurrTimeStrOffset(today);
-        $('input-event-to').value = CurrDateStrOffset(todayHourLater);
-        $('input-event-to-time').value = CurrTimeStrOffset(todayHourLater);
+        $('input-event-from').value = todayDate.toInputValue();
+        $('input-event-from-time').value = todayTime.toInputValue();
+        todayTime.addTime(1, 0, 0);
+        if (todayTime.date.getHours() == 0) {
+            todayDate.addDate(0, 0, 1);
+        }
+        $('input-event-to').value = todayDate.toInputValue();
+        $('input-event-to-time').value = todayTime.toInputValue();
         $('input-event-from-time').style.display = '';
         $('input-event-to-time').style.display = '';
         $('input-event-comment').value = '';
@@ -180,8 +201,10 @@ function RestoreEventInProcess() {
         OnCalendarChanged(true);
     }
 
-    popupData.previousDateFrom = $('input-event-from').value;
-    popupData.previousTimeFrom =  $('input-event-from-time').value;
+    popupData.previousDateFrom = new MyDate();
+    popupData.previousDateFrom.setFromInputValue($('input-event-from').value);
+    popupData.previousTimeFrom = new MyTime();
+    popupData.previousTimeFrom.setFromInputValue($('input-event-from-time').value);
 }
 
 function RestoreReminders(reminderTimeArray, reminderMethodArray) {
@@ -755,7 +778,12 @@ function DoAddTask() {
     var name = $('input-task-name').value;
     var listName = $('combo-task-list').value;
     var listId = popupData.getTaskIdByName(listName);
-    var date = $('checkbox-with-date').checked ?  $('input-task-date').value : null;
+    var date = null;
+    if ($('checkbox-with-date').checked) {
+        date = new MyDate();
+        date.setFromInputValue( $('input-task-date').value);
+    }
+
     var notes = $('input-task-comment').value;
 
     backGround.loader2.addTask(name, listId, date,  notes);
@@ -792,10 +820,14 @@ function DoAddEvent() {
     var listName = $('combo-event-calendar').value;
     var listId = popupData.getCalendarIdByName(listName);
     var timeZone = popupData.getTimeZoneByName(listName);
-    var dateStart = $('input-event-from').value;
-    var dateEnd = $('input-event-to').value;
-    var timeStart = $('input-event-from-time').value;
-    var timeEnd = $('input-event-to-time').value;
+    var dateStart = new MyDate();
+    dateStart.setFromInputValue($('input-event-from').value);
+    var dateEnd = new MyDate();
+    dateEnd.setFromInputValue($('input-event-to').value);
+    var timeStart = new MyTime();
+    timeStart.setFromInputValue($('input-event-from-time').value);
+    var timeEnd = new MyTime();
+    timeEnd.setFromInputValue($('input-event-to-time').value);
     var description = $('input-event-comment').value;
     var allDay = $('checkbox-all-day').checked;
     var place = $('input-event-place').value;
@@ -922,14 +954,13 @@ function SetButtonAddEventState() {
     Date To should be 22.06.2014
 */
 function OnDateFromChanged() {
-    if (!popupData.previousDateFrom) {
-        return;
-    }
-
     if ($('input-event-from').checkValidity()) {
-        var days = daydiff(popupData.previousDateFrom, $('input-event-from').value);
-        $('input-event-to').value = CurrDateStr(addDays($('input-event-to').value, days));
-        popupData.previousDateFrom = $('input-event-from').value;
+        var days = popupData.previousDateFrom.subDate($('input-event-from').value);
+        var myDateTmp = new MyDate();
+        myDateTmp.setFromInputValue( $('input-event-to').value);
+        myDateTmp.addDate(0, 0, -1 * days);
+        $('input-event-to').value = myDateTmp.toInputValue();
+        popupData.previousDateFrom.setFromInputValue($('input-event-from').value);
     }
 }
 
@@ -938,14 +969,13 @@ function OnDateFromChanged() {
     When time from is changed time Time To should change to the same distance
 */
 function OnTimeFromChanged() {
-    if (!popupData.previousTimeFrom) {
-        return;
-    }
-
     if ($('input-event-from-time').checkValidity()) {
-        var minutes = timeDiff(popupData.previousTimeFrom, $('input-event-from-time').value);
-        $('input-event-to-time').value = CurrTimeStr(addMinutes($('input-event-to').value + ' ' + $('input-event-to-time').value + ":00", minutes));
-        popupData.previousTimeFrom = $('input-event-from-time').value;
+        var minutes = popupData.previousTimeFrom.subTime($('input-event-from-time').value);
+        var myTimeTmp = new MyTime();
+        myTimeTmp.setFromInputValue( $('input-event-to-time').value);
+        myTimeTmp.addTime(0, -1 * minutes, 0);
+        $('input-event-to-time').value = myTimeTmp.toInputValue();
+        popupData.previousTimeFrom.setFromInputValue($('input-event-from-time').value);
     }
 }
 

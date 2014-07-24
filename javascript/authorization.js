@@ -426,7 +426,7 @@ function Loader2() {
             };
 
             if (date) {
-                date = date + 'T00:00:00Z';
+                 date = date.toJSON();
             }
 
             notes = filterSpecialChar(notes);
@@ -471,22 +471,11 @@ function Loader2() {
                 throw new Error(error);
             };
 
-            var timeStartLong = timeStart;
-
-            // time should be in a long format HH:MM:SS
-            if (timeStartLong.length == 5) {
-                timeStartLong += ':00';
+            var start = allDay? dateStart.toInputValue() : dateStart.toInputValue() + timeStart.toTimeWithTimeZone();
+            if (allDay) {
+                dateEnd.addDate(0, 0, 1);
             }
-
-            var timeEndLong = timeEnd;
-
-            // time should be in a long format HH:MM:SS
-            if (timeEndLong.length == 5) {
-                timeEndLong += ':00';
-            }
-
-            var start = allDay? dateStart : dateStart + 'T' + timeStartLong  + GetTimeZoneOffsetStr(); //dateStart + ':00' + GetTimeZoneOffsetStr();
-            var end = allDay?  CurrDateStr(addDays(dateEnd, 1)): dateEnd + 'T' + timeEndLong  + GetTimeZoneOffsetStr(); // dateEnd + ':00' + GetTimeZoneOffsetStr();
+            var end = allDay? dateEnd.toInputValue(): dateEnd.toInputValue() + timeEnd.toTimeWithTimeZone();
 
             description = filterSpecialChar(description);
             name = filterSpecialChar(name);

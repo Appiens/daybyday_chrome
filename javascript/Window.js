@@ -150,533 +150,121 @@ function PopupData() {
     }
 }
 
-function Loader(oauth) {
-    this.taskLists = [];
-    this.calendarLists = [];
-    this.userName = null;
-    this.oauthMine = oauth;
-    this.isLoadingTasks = false;
-    this.isLoadingName = false;
-    this.isLoadingCalendars = false;
-
+// src parent.date
+function MyTime(src) {
     var parent = this;
+    var staticDate = "7/Nov/2012 ";
+    var tmp = src == null ? new Date() : src ;
+    parent.date = new Date(staticDate + tmp.toTimeString().substr(0, 5));
 
-    this.Load = function(withAuth) {
-        if (withAuth) {
-            authAndGetTasks();
-        }
-        else {
-             getTasks();
-        }
-
-        getName();
-        getCalendars();
+    parent.toInputValue = function() {
+        return parent.date.toTimeString().substr(0, 5);
     }
 
-    this.Clear = function() {
-        this.taskLists = [];
-        this.calendarLists = [];
-        this.userName = null;
-    }
-
-    this.isLoading = function() {
-        return this.isLoadingCalendars || this.isLoadingName || this.isLoadingTasks;
-    }
-
-    this.isLoadedOk = function() {
-        return !this.isLoading() && this.taskLists.length > 0 && this.calendarLists.length > 0 && this.userName != null;
-    }
-
-    /* Adds task to a task list */
-    /* string name - name of a task,
-     string listId - id of task list to add task,
-     string date - date of task (as a value of input date),
-     string notes - comment to task
-     */
-    this.addTask = function(name, listId, date, notes) {
-
-        if (!this.oauthMine.allowRequest())
-        {
-            LogMsg('Loader AddTask: another request is processing');
-            throw new Error('Loader AddTask: another request is processing');
+    parent.setFromInputValue = function(inputValue) {
+        try {
+            parent.date = new Date(staticDate + inputValue);
         }
-
-        var xhr = new XMLHttpRequest();
-        try
-        {
-            xhr.onreadystatechange = onAddTask(xhr);
-            xhr.onerror = function(error)
-            {
-                LogMsg('Loader AddTask: error: ' + error);
-                throw new Error(error);
-            };
-
-            if (date) {
-                date = date + 'T00:00:00Z';
-            }
-
-            notes = filterSpecialChar(notes);
-            name = filterSpecialChar(name);
-
-            url  = 'https://www.googleapis.com/tasks/v1/lists/' + listId + '/tasks';
-
-            xhr.open('POST', url);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            var params = date == null ? '{"title":"' + name + '","notes":"'+ notes + '"}' : '{"title":"' + name + '","due":"' + date + '","notes":"'+ notes + '"}';
-            this.oauthMine.setSignedRequest(xhr, params, true);
-        }
-        catch (e)
-        {
-            LogMsg('Loader AddTask ex: ' + e);
-            throw e;
-        }
-
-    }
-
-    /* Adds event to a calendar */
-    /* string name - name of an event,
-     string listId - id of calendar to add an event,
-     string timeZone - timeZone of the calendar
-     string dateStart - start date of an event (as a value of input datetime-local),
-     string dateEnd - end date of an event (as a value of input datetime-local),
-     string description - the description of an event,
-     boolean allDay - is this an all day event,
-     string place - place of an event,
-     string recurrenceTypeValue - elem of repetitionPeriods, null if don`t need repetition
-     array of string reminderTimeArray - subArray of remindersPeriods, [] if don`t need reminders
-     array of string reminderMethodArray - subArray of remindersMethods, [] if don`t need reminders
-     */
-    this.addEvent = function(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray) {
-        if (!this.oauthMine.allowRequest())
-        {
-            LogMsg('Loader AddEvent: another request is processing');
-            throw new Error('Loader AddEvent: another request is processing');
-        }
-
-        var xhr = new XMLHttpRequest();
-        try
-        {
-            xhr.onreadystatechange = onAddEvent(xhr);
-            xhr.onerror = function(error)
-            {
-                LogMsg('Loader AddEvent: error: ' + error);
-                throw new Error(error);
-            };
-
-            var timeStartLong = timeStart;
-
-            // time should be in a long format HH:MM:SS
-            if (timeStartLong.length == 5) {
-                timeStartLong += ':00';
-            }
-
-            var timeEndLong = timeEnd;
-
-            // time should be in a long format HH:MM:SS
-            if (timeEndLong.length == 5) {
-                timeEndLong += ':00';
-            }
-
-            var start = allDay? dateStart : dateStart + 'T' + timeStartLong  + GetTimeZoneOffsetStr(); //dateStart + ':00' + GetTimeZoneOffsetStr();
-            var end = allDay?  CurrDateStr(addDays(dateEnd, 1)): dateEnd + 'T' + timeEndLong  + GetTimeZoneOffsetStr(); // dateEnd + ':00' + GetTimeZoneOffsetStr();
-
-            LogMsg(start);
-            LogMsg(end);
-
-            description = filterSpecialChar(description);
-            name = filterSpecialChar(name);
-            place = filterSpecialChar(place);
-            var recurrenceRule = BuildRecurrenceRule(recurrenceTypeValue);
-            var reminderTimeArrayMins = reminderTimeArray; //BuildReminderTimeArrayMins(reminderTimeArray);
-            var reminderMethodArrayTypes = reminderMethodArray; //BuildReminderTimeArrayMins(reminderMethodArray);
-
-            url  = 'https://www.googleapis.com/calendar/v3/calendars/' + listId + '/events';
-
-            xhr.open('POST', url);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            var params = CreateEventParams(start, end, allDay, description, name, place, recurrenceRule, timeZone, recurrenceRule != null , reminderTimeArrayMins, reminderMethodArrayTypes);
-            this.oauthMine.setSignedRequest(xhr, params, true);
-        }
-        catch (e)
-        {
-            LogMsg('Loader AddEvent ex: ' + e);
-            throw e;
+        catch (e) {
+            console.log(e.message);
         }
     }
 
-    /* Creates params for an event*/
-    /*
-     string start - start date of an event (in correct format 2014-06-04T00:00:00+04),
-     string end - end date of an event (in correct format 2014-06-04T00:00:00+04),
-     boolean allDay - is this an all day event,
-     string description - the description of an event,
-     string name - the name of an event,
-     string place - place of an event,
-     string recurrenceRule - recurrenceRule in correct format RRULE:FREQ=WEEKLY,
-     string timeZone - time zone (used if all day event (Goodle requires) or addTimeZone flag is set)
-     boolean addTimeZone - true if we want to add time zone to start and end dates
-     array of string reminderTimeArrayMin - [5, 10, 60] remind before (in minutes), [] if don`t need reminders
-     array of string reminderMethodArrayTypes - [popup, sms, email] remind method, [] if don`t need reminders
-     */
-    var CreateEventParams = function(start, end, allDay, description, name, place, recurrenceRule, timeZone, addTimeZone, reminderTimeArrayMins, reminderMethodArrayTypes) {
-        var params = '{';
-
-        if (allDay) {
-            params += '"start": {"date": "' + start + '", "timeZone": "' + timeZone + '"}, "end": {"date": "' + end +'", "timeZone": "' + timeZone + '"}';
-        }
-        else
-        if (addTimeZone) {
-            params += '"end": {"dateTime": "' + end +'", "timeZone": "' + timeZone + '"},"start": {"dateTime": "' + start + '", "timeZone": "' + timeZone + '"}';
-        }
-        else {
-            params += '"end": {"dateTime": "' + end +'"},"start": {"dateTime": "' + start + '"}'
-        }
-
-        if (description) {
-            params += ',"description": "'+ description +'"';
-        }
-
-        if (name) {
-            params += ',"summary": "'+ name +'"';
-        }
-
-        if (place) {
-            params += ',"location": "'+ place +'"';
-        }
-
-        if (recurrenceRule) {
-            params += ',"recurrence": ["'+ recurrenceRule +'"]';
-        }
-
-        if (reminderTimeArrayMins.length > 0) {
-            params += ',"reminders": { "useDefault": false, "overrides": [';
-
-            for (var i = 0; i < reminderTimeArrayMins.length; i++) {
-                params +=  '{"method": "'+ reminderMethodArrayTypes[i] + '", "minutes": ' + reminderTimeArrayMins[i] + '}'
-
-                if (i < reminderTimeArrayMins.length - 1) {
-                    params += ','
-                }
-            }
-
-            params += ']}';
-        }
-        else {
-            params += ',"reminders": { "useDefault": false }';
-        }
-
-        params += '}';
-
-        return params;
+    parent.addTime = function(hours, minutes, seconds) {
+        hours = hours || 0;
+        minutes = minutes || 0;
+        seconds = seconds || 0;
+        parent.date.setHours(parent.date.getHours() + hours);
+        parent.date.setMinutes(parent.date.getMinutes() + minutes);
+        parent.date.setSeconds(parent.date.getSeconds() + seconds);
     }
 
-    /* Callback function for AddTask */
-    /*xhr - request*/
-    var onAddTask = function(xhr)
-    {
-        return function()
-        {
-            if (xhr.readyState != 4) {
-                return;
-            }
-
-            if (xhr.status != ST_REQUEST_OK) {
-                try {
-                    var text = xhr.response;
-                    var obj = JSON.parse(text);
-                    var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
-                    chrome.runtime.sendMessage({greeting: "AddedError", error: error, type: "task"});
-                    throw new Error(error);
-                }
-                catch (e) {
-                    LogMsg('ex: ' + e);
-                    throw e;
-                }
-            }
-            else {
-                //  taskInProcess = null;
-                chrome.runtime.sendMessage({greeting: "AddedOk", type: "task"});
-            }
-        };
+    parent.subTime = function(inputValue) {
+        var date2 = new Date(staticDate + inputValue);
+        return (parent.date.getHours() - date2.getHours())*60 + (parent.date.getMinutes() - date2.getMinutes());
     }
 
-    /* Callback function for AddEvent */
-    /* xhr - request*/
-    var onAddEvent = function(xhr)
-    {
-        return function()
-        {
-            if (xhr.readyState != 4) {
-                return;
-            }
-
-            if (xhr.status != ST_REQUEST_OK) {
-                try {
-                    var text = xhr.response;
-                    var obj = JSON.parse(text);
-                    var error = xhr.statusText + ' ' + xhr.status + '\n' + obj.error.code + ' ' + obj.error.message;
-                    chrome.runtime.sendMessage({greeting: "AddedError", error: error, type: "event"});
-                    throw new Error(error);
-                }
-                catch (e) {
-                    LogMsg('ex: ' + e);
-                    throw e;
-                }
-            }
-            else {
-                // eventInProcess = null;
-                chrome.runtime.sendMessage({greeting: "AddedOk", type: "event"});
-            }
-        };
+    parent.toJSON = function() {
+        var s = parent.date.toJSON().replace('.000', '');
+        return s.substr(s.indexOf('T'));
     }
 
-    /* asking for tasks lists of an authorized user */
-    var getTasks = function() {
-        if (this.oauthMine.allowRequest()) {
-            LogMsg('Loader: getTasks');
-            askForTaskLists(true);
-        }
-        else {
-            setTimeout(getTasks, 1000);
-        }
+    parent.toTimeWithTimeZone = function() {
+        return 'T' + FormatTime(parent.date) + GetTimeZoneOffsetStr();
     }
 
-    /* asking for task lists with authorization (can select account) */
-    var authAndGetTasks = function() {
-        if ( true == true) {
-            LogMsg('Loader: authAndGetTasks');
-            authAndAskForTaskLists();
-        }
-        else {
-            setTimeout(authAndGetTasks, 1000);
-        }
+    parent.setStartNextHour = function() {
+        var tmp = parent.date;
+        tmp.setMinutes(0);
+        tmp.setSeconds(0);
+        tmp.setHours(tmp.getHours() + 1);
+        parent.date = new Date(staticDate + tmp.toTimeString().substr(0, 5));
     }
 
-    /* asking for users name of an authorized user*/
-    function getName() {
-        if (this.oauthMine.allowRequest()) {
-            LogMsg('Loader: getName');
-            askForName(true);
-        }
-        else {
-            setTimeout(getName, 1000);
-        }
+    var GetTimeZoneOffsetStr = function() {
+        var d = new Date();
+        var offset = d.getTimezoneOffset();
+        //var durationInMinutes = AddZero(parseInt(Math.abs(offset/60))) + ":" + AddZero(Math.abs(offset%60), 2);
+        var durationInMinutes = ('0' + Math.abs(offset/60)).slice(-2) + ":" + ('0' + Math.abs(offset%60)).slice(-2);
+        var sign = offset > 0?"-":"+";
+        return sign + durationInMinutes;
     }
 
-    /*asking for calendars of an authorized user*/
-    function getCalendars() {
-        if (this.oauthMine.allowRequest()) {
-            LogMsg('Loader: getCalendars');
-            askForCalendars(true);
-        }
-        else {
-            setTimeout(getCalendars, 1000);
-        }
+    var FormatTime = function(time) {
+        return ('0' + time.getHours()).slice(-2) + ":" + ('0' + time.getMinutes()).slice(-2) + ":" + ('0' + time.getSeconds()).slice(-2);
     }
 
-    var askForTaskLists = function(blindMode) {
-
-        var xhr = new XMLHttpRequest();
-        try
-        {
-            this.isLoadingTasks = true;
-            this.taskLists = [];
-            xhr.onreadystatechange = onGotTaskLists(xhr);
-            xhr.onerror = function(error)
-            {
-                parent.isLoadingTasks = false;
-                LogMsg('Loader AskForTaskLists: error: ' + error);
-                throw new Error(error);
-            };
-
-            url  = 'https://www.googleapis.com/tasks/v1/users/@me/lists';
-            xhr.open('GET', url);
-            this.oauthMine.setSignedRequest(xhr, null, blindMode);
-        }
-        catch (e)
-        {
-            this.isLoadingTasks = false;
-            LogMsg('Loader AskForTaskLists: ex: ' + e);
-            throw e;
-        }
-    }
-
-    var askForCalendars = function(blindMode) {
-        var xhr = new XMLHttpRequest();
-        try
-        {
-            this.isLoadingCalendars = true;
-            this.calendarLists = [];
-            xhr.onreadystatechange = onGotCalendars(xhr);
-            xhr.onerror = function(error)
-            {
-                parent.isLoadingCalendars = false;
-                LogMsg('Loader AskForCalendars: error: ' + error);
-                throw new Error(error);
-            };
-
-            url  = 'https://www.googleapis.com/calendar/v3/users/me/calendarList?fields=items(accessRole%2CbackgroundColor%2CdefaultReminders%2Cdescription%2Cid%2Clocation%2Csummary%2CtimeZone)';
-            xhr.open('GET', url);
-            this.oauthMine.setSignedRequest(xhr, null, blindMode);
-        }
-        catch (e)
-        {
-            this.isLoadingCalendars = false;
-            LogMsg('Loader AskForCalendars: ex: ' + e);
-            throw e;
-        }
-    }
-
-    /* Ask for task lists with select Google account*/
-    /* the result is put to calendar lists*/
-    var authAndAskForTaskLists = function() {
-        trackEvent('Extention button', 'clicked');
-        var xhr = new XMLHttpRequest();
-        try
-        {
-            this.isLoadingTasks = true;
-            this.taskLists = [];
-            xhr.onreadystatechange = onGotTaskLists(xhr);
-            xhr.onerror = function(error)
-            {
-                parent.isLoadingTasks = false;
-                LogMsg('Loader AuthAndAskForTaskLists: error: ' + error);
-                throw new Error(error);
-            };
-
-            url  = 'https://www.googleapis.com/tasks/v1/users/@me/lists';
-            xhr.open('GET', url);
-            this.oauthMine.setSignedRequestSpec(xhr, null);
-        }
-        catch (e)
-        {
-            this.isLoadingTasks = false;
-            LogMsg('Loader AuthAndAskForTaskLists: ex: ' + e);
-            throw e;
-        }
-    }
-
-    /* Ask for user`s name*/
-    /* The result is put to userName*/
-    /*boolean blindMode - if true no authorization windows will be shown during request*/
-    var askForName = function(blindMode) {
-        var xhr = new XMLHttpRequest();
-        try
-        {
-            this.isLoadingName = true;
-            this.userName = null;
-            xhr.onreadystatechange = onGotName(xhr);
-            xhr.onerror = function(error)
-            {
-                LogMsg('Loader AskForName: error: ' + error);
-                parent.isLoadingName = false;
-                throw new Error(error);
-            };
-
-            url  = 'https://www.googleapis.com/oauth2/v1/userinfo';
-
-            xhr.open('GET', url);
-            this.oauthMine.setSignedRequest(xhr, null, blindMode);
-        }
-        catch (e)
-        {
-            this.isLoadingName = false;
-            LogMsg('Loader AskForName: ex: ' + e);
-            throw e;
-        }
-    }
-
-    /* Callback function for AskForTaskLists*/
-    /* xhr - request*/
-    var onGotTaskLists = function(xhr) {
-        return function () {
-            if (xhr.readyState != 4) {
-                return;
-            }
-
-            var isOk;
-            var exception = null;
-
-            LogMsg('Loader On Got TaskLists ' + xhr.readyState + ' ' + xhr.status);
-
-            try {
-                var text = xhr.response;
-                isOk = xhr.status == ST_REQUEST_OK;
-                var obj = JSON.parse(text);
-                parent.taskLists= obj.items;
-            }
-            catch (e) {
-                LogMsg('Loader onGotTaskLists ex: ' + e);
-                parent.taskLists = [];
-                isOk = false;
-                throw e;
-            }
-            finally {
-                // sending a message to popup window
-                chrome.runtime.sendMessage({greeting: "taskListReady", isOk: isOk});
-                parent.isLoadingTasks = false;
-            }
-        }
-    }
-    /* Callback function for AskForCalendars*/
-    /* xhr - request*/
-    var onGotCalendars = function(xhr) {
-        return function () {
-            if (xhr.readyState != 4) {
-                return;
-            }
-
-            var isOk;
-            LogMsg('Loader On Got Calendars ' + xhr.readyState + ' ' + xhr.status);
-
-            try {
-                var text = xhr.response;
-                isOk = xhr.status == ST_REQUEST_OK;
-                var obj = JSON.parse(text);
-                parent.calendarLists= obj.items;
-            }
-            catch (e) {
-                LogMsg('Loader onGotCalendars ex: ' + e);
-                parent.calendarLists = [];
-                isOk = false;
-                throw e;
-            }
-            finally {
-                // sending a message to popup window
-                chrome.runtime.sendMessage({greeting: "calendarListReady", isOk: isOk});
-                parent.isLoadingCalendars = false;
-            }
-        }
-    }
-
-    /* Callback function for AskForName*/
-    /* xhr - request*/
-    var onGotName = function(xhr) {
-        return function () {
-            if (xhr.readyState != 4) {
-                return;
-            }
-
-            var isOk;
-             LogMsg('Loader On Got Name ' + xhr.readyState + ' ' + xhr.status);
-
-            try {
-                var text = xhr.response;
-                isOk = xhr.status == ST_REQUEST_OK;
-                var obj = JSON.parse(text);
-                parent.userName = obj.name;
-            }
-            catch (e) {
-                LogMsg('Loader onGotName ex: ' + e);
-                parent.userName = null;
-                isOk = false;
-                throw e;
-            }
-            finally {
-                // sending a message to popup window
-                chrome.runtime.sendMessage({greeting: "userNameReady", isOk: isOk});
-                parent.isLoadingName = false;
-            }
-        }
-    }
+    return parent;
 }
+
+function MyDate(src) {
+    var parent = this;
+    var staticTime = " 00:00";
+    var tmp = src == null ? new Date() : src;
+    parent.date = new Date(tmp.toDateString() + staticTime);
+
+    parent.toInputValue = function() {
+        var s = FormatDate(parent.date);
+
+        return s;
+    }
+
+    parent.setFromInputValue = function(inputValue) {
+        parent.date = new Date(inputValue + staticTime);
+    }
+
+    parent.toJSON = function() {
+        return FormatDate(parent.date) + "T00:00:00Z";
+    }
+
+    parent.subDate = function(inputValue) {
+        var tmp = new Date(inputValue + staticTime);
+        return (parent.date - tmp)/(1000*60*60*24);
+    }
+
+    parent.addDate = function(years, months, days) {
+        years = years || 0;
+        months = months || 0;
+        days = days || 0;
+        parent.date.setFullYear(parent.date.getFullYear() + years);
+        parent.date.setMonth(parent.date.getMonth() + months);
+        parent.date.setDate(parent.date.getDate() + days);
+    }
+
+    parent.setStartNextHour = function() {
+        var tmp = new Date();
+        tmp.setMinutes(0);
+        tmp.setSeconds(0);
+        tmp.setHours(tmp.getHours() + 1);
+        parent.date = new Date(tmp.toDateString() + staticTime);
+    }
+
+    var FormatDate = function(date) {
+        return ('000' + date.getFullYear()).slice(-4) + "-" + ('0' + (1+date.getMonth())).slice(-2) + "-" + ('0' + date.getDate()).slice(-2);
+    }
+
+    return parent;
+}
+
+
+
