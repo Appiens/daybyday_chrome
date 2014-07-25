@@ -5,42 +5,53 @@
 //adding listener when body is loaded to call init function.
 window.addEventListener('load', init, false);
 
+// the backGround page
 var backGround;
 
-
-/**
- * Sets the value of multiple calendar checkbox based on value from
- * local storage, and sets up the `save` event handler.
- */
+/*Initializes the page*/
 function init() {
     backGround = chrome.extension.getBackgroundPage();
-    $('optionsTitle').innerHTML = chrome.i18n.getMessage('optionsTitle');
-
-    $('buttonRevoke').value = chrome.i18n.getMessage('revoke_action_title');
-    $('buttonRevokeText').innerHTML= chrome.i18n.getMessage('revoke_rights_action_title');
-    $('extensionName').innerHTML = chrome.i18n.getMessage('name');
-    document.querySelector('#buttonRevoke').addEventListener('click', revokeIt);
-    chrome.runtime.onMessage.addListener(OnGotMessage);
+    LocalizePage();
+    AddEventHandlers();
     updateView();
 };
 
+/*Revokes rigths to get token from app*/
 function revokeIt() {
-    backGround.loader2.requestProcessor.Revoke(updateView);
+    backGround.loader.requestProcessor.Revoke(updateView);
 };
 
+/* On Got Message event handler
+ When connection appears/disappears we should update view
+ */
 function OnGotMessage(request, sender, sendResponse) {
     if (request.greeting && request.greeting == "token") {
         updateView();
     }
 }
 
+/*Updates the Revoke button state*/
 function updateView() {
-    if (backGround.loader2.IsRevoked() || !backGround.loader2.TokenNotNull()) {
+    if (backGround.loader.IsRevoked() || !backGround.loader.TokenNotNull()) {
         disableButton($('buttonRevoke'));
     }
     else {
         enableButton($('buttonRevoke'));
     }
+}
+
+/*localize page to current language*/
+function LocalizePage() {
+    $('optionsTitle').innerHTML = chrome.i18n.getMessage('optionsTitle');
+    $('buttonRevoke').value = chrome.i18n.getMessage('revoke_action_title');
+    $('buttonRevokeText').innerHTML= chrome.i18n.getMessage('revoke_rights_action_title');
+    $('extensionName').innerHTML = chrome.i18n.getMessage('name');
+}
+
+/*adds event handlers */
+function AddEventHandlers() {
+    document.querySelector('#buttonRevoke').addEventListener('click', revokeIt);
+    chrome.runtime.onMessage.addListener(OnGotMessage);
 }
 
 

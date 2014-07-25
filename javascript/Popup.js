@@ -21,23 +21,23 @@ function init() {
     }
 
     // setting the current state
-    if (!backGround.loader2.TokenNotNull) {
+    if (!backGround.loader.TokenNotNull) {
         changeState(popupData.windowStates.ST_DISCONNECTED);
         backGround.LogMsg('Popup: disconnected');
     }
     else {
             GetGoogleInfoFromBackGround();
 
-            if (backGround.loader2.isLoading()) {
+            if (backGround.loader.isLoading()) {
                 changeState(popupData.windowStates.ST_CONNECTING);
                 backGround.LogMsg('Popup: disconnected');
             }
             else {
-                if (backGround.loader2.isLoadedOk()) {
+                if (backGround.loader.isLoadedOk()) {
                     backGround.LogMsg('Popup: taking old vals');
 
                     changeState(popupData.windowStates.ST_CONNECTED);
-                    backGround.loader2.Load();
+                    backGround.loader.Load();
                 }
                 else {
                     changeState(popupData.windowStates.ST_CONNECTING);
@@ -593,17 +593,17 @@ function AddReminderDiv() {
 
 // taking task lists and calendars from background
 function GetGoogleInfoFromBackGround() {
-    if (!backGround.loader2.isLoadingTasks && backGround.loader2.taskLists.length > 0) {
-        popupData.taskLists = backGround.loader2.taskLists;
+    if (!backGround.loader.isLoadingTasks && backGround.loader.taskLists.length > 0) {
+        popupData.taskLists = backGround.loader.taskLists;
         FillTaskListComboFromBackground();
     }
 
-    if (!backGround.loader2.isLoadingCalendars && backGround.loader2.calendarLists.length > 0) {
-        popupData.calendarLists = backGround.loader2.calendarLists;
+    if (!backGround.loader.isLoadingCalendars && backGround.loader.calendarLists.length > 0) {
+        popupData.calendarLists = backGround.loader.calendarLists;
         FillCalendarComboFromBackground();
     }
 
-    if (!backGround.loader2.isLoadingName) {
+    if (!backGround.loader.isLoadingName) {
         GetUserName();
     }
 }
@@ -621,7 +621,7 @@ function OnGotMessage(request, sender, sendResponse) {
         }
        else {
            if (popupData.windowStates.GetCurrentState() == popupData.windowStates.ST_CONNECTING &&
-               backGround.loader2.isLoadedOk()) {
+               backGround.loader.isLoadedOk()) {
                changeState(popupData.windowStates.ST_CONNECTED);
            }
        }
@@ -632,13 +632,13 @@ function OnGotMessage(request, sender, sendResponse) {
         switch (request.greeting) {
             case "taskListReady":
                 if (popupData.taskLists.length == 0) {
-                    popupData.taskLists = backGround.loader2.taskLists;
+                    popupData.taskLists = backGround.loader.taskLists;
                     FillTaskListComboFromBackground();
                 }
                 break;
             case "calendarListReady":
                 if (popupData.calendarLists.length == 0) {
-                    popupData.calendarLists = backGround.loader2.calendarLists;
+                    popupData.calendarLists = backGround.loader.calendarLists;
                     FillCalendarComboFromBackground();
                 }
                 break;
@@ -757,7 +757,7 @@ function RestoreTaskInProcessCombo() {
 /*Gets user name from background page, fill label-account-name with it*/
 function GetUserName() {
     backGround.LogMsg('Popup: GotUserName!');
-    $('label-account-name').innerHTML = backGround.loader2.userName != null ?  backGround.loader2.userName : backGround.spr.userMessages.MSG_UNAUTHORIZED;
+    $('label-account-name').innerHTML = backGround.loader.userName != null ?  backGround.loader.userName : backGround.spr.userMessages.MSG_UNAUTHORIZED;
 }
 
 function DoAddTask() {
@@ -786,7 +786,8 @@ function DoAddTask() {
 
     var notes = $('input-task-comment').value;
 
-    backGround.loader2.addTask(name, listId, date,  notes);
+  //  backGround.loader.addTask(name, listId, date,  notes);
+    backGround.loader.addTask({"name": name, "listId": listId, "date": date, "notes": notes});
 }
 
 function DoClearTask() {
@@ -837,7 +838,11 @@ function DoAddEvent() {
     var reminderTimeArray = MakeReminderTimeArray();
     var reminderMethodArray = MakeReminderMethodArray();
 
-    backGround.loader2.addEvent(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray);
+ //   backGround.loader.addEvent(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray);
+    backGround.loader.addEvent({"name": name, "listId": listId, "timeZone": timeZone, "dateStart": dateStart, "dateEnd": dateEnd,
+        "timeStart": timeStart, "timeEnd": timeEnd, "description": description, "allDay": allDay,
+        "place": place, "recurrenceTypeValue": recurrenceTypeValue, "reminderTimeArray": reminderTimeArray,
+        "reminderMethodArray": reminderMethodArray});
 }
 
 /*
@@ -846,7 +851,7 @@ function DoAddEvent() {
 function DoAuthorize() {
     backGround.LogMsg('Popup: Authorize called');
     changeState(popupData.windowStates.ST_CONNECTING);
-    backGround.loader2.Load(true);
+    backGround.loader.Load(true);
 }
 
 // Hides or shows all page elements

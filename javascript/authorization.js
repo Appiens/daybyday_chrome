@@ -1,27 +1,32 @@
-/**
- * Created by astafyevala on 21.07.2014.
- */
 
+/*Does authorization and sends requests*/
 function RequestProcessor() {
     var self = this;
-    self.requestQueue = [];
-    self.requestQueueIsProcessing = false;
-    self.sheduledProcessRequired = false;
-    self.token = null;
-    self.tokenExpiresIn = 0;
-    self.tokenGetTime = 0;
-    self.isRevoked = false;
-    var currTokenOk = false;
+    self.requestQueue = [];     // the request queue (as an array)
+    self.token = null;          // current token
+    self.tokenExpiresIn = 0;    // the timespan during which token is actual
+    self.tokenGetTime = 0;      // the time we got token
+    self.isRevoked = false;     // sets to true when user revokes rights from this app
+    var currTokenOk = false;    // the current state of token (we are going to compare old and ne states)
 
+    /*Adds request to request queue
+    * string request - the request,
+    * string body - the request`s body
+    * blindMode - if true authorization window won`t be shown*/
     self.Add = function(request, body, blindMode) {
         self.requestQueue.push({"request": request, "body": body, "blindMode": blindMode});
     }
 
+    /*Adds request to request queue and sends all requests in queue
+     * string request - the request,
+     * string body - the request`s body
+     * blindMode - if true authorization window won`t be shown*/
     self.AddAndDo = function(request, body, blindMode) {
         self.Add(request, body, blindMode);
         self.ProcessAll();
     }
 
+    /*Sends all requests in queue*/
     self.ProcessAll = function() {
         while (self.requestQueue.length > 0) {
             var requestToProcess = self.requestQueue.shift();
@@ -29,6 +34,10 @@ function RequestProcessor() {
         }
     }
 
+    /* Sends Request
+    * object requestToProcess {"request": request, "body": body, "blindMode": blindMode}
+    * if requestToProcess = null this function only gets auth token
+    * */
     self.Process = function(requestToProcess) {
         chrome.identity.getAuthToken({'interactive': !requestToProcess.blindMode},
             function (access_token) {
@@ -58,6 +67,10 @@ function RequestProcessor() {
             });
     }
 
+    /* The event handler of onSignInChanged in Chrome
+      string account - new account that logged in in Chrome
+      bool signedIn - if true user logged in
+     */
     self.SignInChanged = function( account, signedIn) {
         LogMsg("Sign in changed " + account + ' ' + signedIn);
         if (signedIn) {
@@ -68,13 +81,15 @@ function RequestProcessor() {
         }
     }
 
+    /*  Gets the token
+     */
     self.Authorize = function() {
         var requestToProcess = {"request": null, "body": null, "blindMode": true};
         self.Process(requestToProcess);
     }
 
     /*
-     make token bad
+     clears token (sets it to null)
      callback - the callback function
      */
     self.ClearToken = function(callback){
@@ -98,6 +113,10 @@ function RequestProcessor() {
             });
     }
 
+    /*
+    revokes rights from the app (we are not able to get tokens after that)
+    callback - the callback function
+     */
     self.Revoke = function(callback) {
         if (self.token == null)  {
             LogMsg('Revoke: token is bad or exprired');
@@ -121,6 +140,10 @@ function RequestProcessor() {
         }
     }
 
+    /*  Revoke status changed event handler
+      xhr - the processed request
+      callback - the callback function
+     */
     var OnRevokeStatusChanged = function(xhr, callback) {
         return function () {
             if (xhr.readyState != 4) {
@@ -133,11 +156,18 @@ function RequestProcessor() {
         }
     }
 
+    /*
+       Initializes object Must be called after creation
+     */
     self.Init = function() {
         chrome.identity.onSignInChanged.addListener(self.SignInChanged);
         window.setInterval(ConnectionAnalyzer, 1000);
     }
 
+    /*
+         Is called every 1000 ms to analyze connection
+         Sends a message to all {greeting: "token", state: isTokenOk} when connection state changes
+     */
     var ConnectionAnalyzer = function() {
         var isTokenOk = self.token != null;
 
@@ -149,24 +179,33 @@ function RequestProcessor() {
     }
 }
 
-function Loader2() {
+/* Loades task lists and calendars
+* Adds events and tasks
+* All requests to Google Calendar API, Google Task API are here*/
+function Loader() {
     var parent = this;
-    parent.taskLists = [];
-    parent.calendarLists = [];
-    parent.userName = null;
-    parent.requestProcessor = new RequestProcessor();
-    parent.isLoadingTasks = false;
-    parent.isLoadingName = false;
-    parent.isLoadingCalendars = false;
+    parent.taskLists = []; // the tasks lists array (loaded with askForTaskLists)
+    parent.calendarLists = []; // the calendar lists array (loaded with askForCalendars)
+    parent.userName = null; // the user name (loaded with askForName)
+    parent.requestProcessor = new RequestProcessor(); // the request processor
+    parent.isLoadingTasks = false; // is true tasksLists loading is in process (don`t use taskLists)
+    parent.isLoadingName = false; // is true name loading is in process (don`t use userName)
+    parent.isLoadingCalendars = false; // is true calendarLists loading is in process (don`t use calendarLists)
 
+    parent.requestProcessor.Init();
+
+    /* returns true if connection is ok, false otherwise*/
     parent.TokenNotNull = function() {
         return parent.requestProcessor.token != null;
     }
 
+    /*returns true if rights has been revoked from app (from options page)*/
     parent.IsRevoked = function() {
         return parent.requestProcessor.isRevoked;
     }
 
+    /*Loads taskLists, calendars and user Name*/
+    /*bool withAuth - if true we should show authorization windows*/
     parent.Load = function (withAuth) {
         if (withAuth) {
             parent.authAndAskForTaskLists();
@@ -180,20 +219,25 @@ function Loader2() {
         parent.requestProcessor.ProcessAll();
     }
 
+    /*Clears taskLists, calendarLists and userName*/
     parent.Clear = function () {
         parent.taskLists = [];
         parent.calendarLists = [];
         parent.userName = null;
     }
 
+    /*returns true if loading is in process (use it after calling Load function to wait when load ends)*/
     parent.isLoading = function () {
         return parent.isLoadingCalendars || parent.isLoadingName || parent.isLoadingTasks;
     }
 
+    /*returns true if all entities - taskLists, calendarLists and userName has been successfully loaded*/
     parent.isLoadedOk = function () {
         return !parent.isLoading() && parent.taskLists.length > 0 && parent.calendarLists.length > 0 && parent.userName != null;
     }
 
+    /*creates ask for task lists request and Adds it to requestProcessor`s request queue
+    * bool blindMode - if true we shouldn`t show authorization windows while processing request*/
     parent.askForTaskLists = function (blindMode) {
 
         var xhr = new XMLHttpRequest();
@@ -203,7 +247,7 @@ function Loader2() {
             xhr.onreadystatechange = onGotTaskLists(xhr);
             xhr.onerror = function (error) {
                 parent.isLoadingTasks = false;
-                LogMsg('Loader2 AskForTaskLists: error: ' + error);
+                LogMsg('Loader AskForTaskLists: error: ' + error);
                 throw new Error(error);
             };
 
@@ -213,11 +257,13 @@ function Loader2() {
         }
         catch (e) {
             parent.isLoadingTasks = false;
-            LogMsg('Loader2 AskForTaskLists: ex: ' + e);
+            LogMsg('Loader AskForTaskLists: ex: ' + e);
             throw e;
         }
     }
 
+    /*creates ask for calendars request and Adds it to requestProcessor`s request queue
+    *bool blindMode - if true we shouldn`t show authorization windows while processing request*/
     parent.askForCalendars = function (blindMode) {
         var xhr = new XMLHttpRequest();
         try {
@@ -226,7 +272,7 @@ function Loader2() {
             xhr.onreadystatechange = onGotCalendars(xhr);
             xhr.onerror = function (error) {
                 parent.isLoadingCalendars = false;
-                LogMsg('Loader2 AskForCalendars: error: ' + error);
+                LogMsg('Loader AskForCalendars: error: ' + error);
                 throw new Error(error);
             };
 
@@ -236,7 +282,7 @@ function Loader2() {
         }
         catch (e) {
             parent.isLoadingCalendars = false;
-            LogMsg('Loader2 AskForCalendars: ex: ' + e);
+            LogMsg('Loader AskForCalendars: ex: ' + e);
             throw e;
         }
     }
@@ -252,7 +298,7 @@ function Loader2() {
             xhr.onreadystatechange = onGotTaskLists(xhr);
             xhr.onerror = function (error) {
                 parent.isLoadingTasks = false;
-                LogMsg('Loader2 AuthAndAskForTaskLists: error: ' + error);
+                LogMsg('Loader AuthAndAskForTaskLists: error: ' + error);
                 throw new Error(error);
             };
 
@@ -262,7 +308,7 @@ function Loader2() {
         }
         catch (e) {
             parent.isLoadingTasks = false;
-            LogMsg('Loader2 AuthAndAskForTaskLists: ex: ' + e);
+            LogMsg('Loader AuthAndAskForTaskLists: ex: ' + e);
             throw e;
         }
     }
@@ -277,7 +323,7 @@ function Loader2() {
             parent.userName = null;
             xhr.onreadystatechange = onGotName(xhr);
             xhr.onerror = function (error) {
-                LogMsg('Loader2 AskForName: error: ' + error);
+                LogMsg('Loader AskForName: error: ' + error);
                 parent.isLoadingName = false;
                 throw new Error(error);
             };
@@ -289,7 +335,7 @@ function Loader2() {
         }
         catch (e) {
             parent.isLoadingName = false;
-            LogMsg('Loader2 AskForName: ex: ' + e);
+            LogMsg('Loader AskForName: ex: ' + e);
             throw e;
         }
     }
@@ -305,7 +351,7 @@ function Loader2() {
             var isOk;
             var exception = null;
 
-            LogMsg('Loader2 On Got TaskLists ' + xhr.readyState + ' ' + xhr.status);
+            LogMsg('Loader On Got TaskLists ' + xhr.readyState + ' ' + xhr.status);
 
             try {
                 var text = xhr.response;
@@ -321,7 +367,7 @@ function Loader2() {
                 }
             }
             catch (e) {
-                LogMsg('Loader2 onGotTaskLists ex: ' + e);
+                LogMsg('Loader onGotTaskLists ex: ' + e);
                 parent.taskLists = [];
                 isOk = false;
                 throw e;
@@ -342,7 +388,7 @@ function Loader2() {
             }
 
             var isOk;
-            LogMsg('Loader2 On Got Calendars ' + xhr.readyState + ' ' + xhr.status);
+            LogMsg('Loader On Got Calendars ' + xhr.readyState + ' ' + xhr.status);
 
             try {
                 var text = xhr.response;
@@ -358,7 +404,7 @@ function Loader2() {
                 }
             }
             catch (e) {
-                LogMsg('Loader2 onGotCalendars ex: ' + e);
+                LogMsg('Loader onGotCalendars ex: ' + e);
                 parent.calendarLists = [];
                 isOk = false;
                 throw e;
@@ -380,7 +426,7 @@ function Loader2() {
             }
 
             var isOk;
-            LogMsg('Loader2 On Got Name ' + xhr.readyState + ' ' + xhr.status);
+            LogMsg('Loader On Got Name ' + xhr.readyState + ' ' + xhr.status);
 
             try {
                 var text = xhr.response;
@@ -395,7 +441,7 @@ function Loader2() {
                 }
             }
             catch (e) {
-                LogMsg('Loader2 onGotName ex: ' + e);
+                LogMsg('Loader onGotName ex: ' + e);
                 parent.userName = null;
                 isOk = false;
                 throw e;
@@ -409,12 +455,18 @@ function Loader2() {
     }
 
     /* Adds task to a task list */
+    /*  object task {name: name, listId: listId, date: date, notes: notes} */
     /* string name - name of a task,
      string listId - id of task list to add task,
      string date - date of task (as a value of input date),
      string notes - comment to task
      */
-    parent.addTask = function(name, listId, date, notes) {
+    parent.addTask = function(task) {
+        var name = task.name || "";
+        var listId = task.listId || null;
+        var date = task.date || null;
+        var notes = task.notes || "";
+
         var xhr = new XMLHttpRequest();
         try
         {
@@ -448,6 +500,11 @@ function Loader2() {
     }
 
     /* Adds event to a calendar */
+    /*object myEvent*/
+    /* {"name": name, "listId": listId, "timeZone": timeZone, "dateStart": dateStart, "dateEnd": dateEnd,
+        "timeStart": timeStart, "timeEnd": timeEnd, "description": description, "allDay": allDay,
+        "place": place, "recurrenceTypeValue": recurrenceTypeValue, "reminderTimeArray": reminderTimeArray,
+        "reminderMethodArray": reminderMethodArray}*/
     /* string name - name of an event,
      string listId - id of calendar to add an event,
      string timeZone - timeZone of the calendar
@@ -460,7 +517,21 @@ function Loader2() {
      array of string reminderTimeArray - subArray of remindersPeriods, [] if don`t need reminders
      array of string reminderMethodArray - subArray of remindersMethods, [] if don`t need reminders
      */
-    parent.addEvent = function(name, listId, timeZone, dateStart, dateEnd, timeStart, timeEnd, description, allDay, place, recurrenceTypeValue, reminderTimeArray, reminderMethodArray) {
+    parent.addEvent = function(myEvent) {
+        var name = myEvent.name || "";
+        var listId = myEvent.listId || null;
+        var timeZone  = myEvent.timeZone || null;
+        var dateStart = myEvent.dateStart || null;
+        var dateEnd = myEvent.dateEnd || null;
+        var timeStart =  myEvent.timeStart || null;
+        var timeEnd = myEvent.timeEnd || null;
+        var description = myEvent.description || "";
+        var allDay =  myEvent.allDay || false;
+        var place = myEvent.place || "";
+        var recurrenceTypeValue = myEvent.recurrenceTypeValue || null;
+        var reminderTimeArray = myEvent.reminderTimeArray || [];
+        var reminderMethodArray = myEvent.reminderMethodArray || [];
+
         var xhr = new XMLHttpRequest();
         try
         {
@@ -621,4 +692,6 @@ function Loader2() {
             }
         };
     }
+
+    return parent;
 }

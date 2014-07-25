@@ -69,7 +69,7 @@ function PopupSettings() {
     // creates and returns it otherwise
     this.GetSavedTask = function() {
         if (taskInProcess == null) {
-            taskInProcess = new Task('', null, null, '', null, null);
+            taskInProcess = new Task({});
         }
 
         return taskInProcess;
@@ -79,7 +79,7 @@ function PopupSettings() {
     // creates and returns it otherwise
     this.GetSavedEvent = function() {
         if (eventInProcess == null) {
-            eventInProcess = new EventCal('', null, null, null, null, null, null, '', false, '', null, [], []);
+            eventInProcess = new EventCal({});
         }
 
         return eventInProcess;

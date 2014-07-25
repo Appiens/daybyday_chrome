@@ -2,48 +2,50 @@
  * Created by AstafyevaLA on 24.04.2014.
  */
 
-var loader2 = new Loader2();
+// loads taskLists, calendarLists, userName
+var loader = new Loader();
 
 // keeps the number of successfully added tasks and events to ask for mark
-var markCounter = new MarkCounterBool(5);
+var markCounter = new MarkCounterBool(15);
 
-// sprs
+// dictionaries module
 var spr = new Spr();
 
-// popup win settings
+// popup win settings? that should be saved between popup win launches
 var popupSettings = new PopupSettings();
 
-// google analytics
+// google analytics (for logging)
 var _gaq;
 
 /* updating icon and popup page */
 function updateView() {
-    var isTokenOk = loader2.TokenNotNull();
+    var isTokenOk = loader.TokenNotNull();
 
     if (isTokenOk) {
         chrome.browserAction.setIcon({ 'path' : '../images/daybyday16.png'});
         chrome.browserAction.setPopup({popup : "views/Popup.html"});
-        loader2.Load(false);
+        loader.Load(false);
     }
     else {
         chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
         chrome.browserAction.setPopup({popup : ""});
-        loader2.Clear();
+        loader.Clear();
     }
 };
 
-/* Ask for task lists with select Google account*/
-/* the result is put to calendar lists*/
+/* Ask for taskLists, calendarLists, userName with select Google account*/
 function AuthAndAskForTaskLists() {
-   // loader.Load(true);
-    loader2.Load(true);
+    loader.Load(true);
 }
 
-/* Logs msg*/
+/* Logs msg to console with current date and time*/
 function LogMsg(message) {
     console.log(GetDateTimeStr() + ' ' + message);
 }
 
+/* On Got Message event handler
+   When connection appears/disappears we should update view
+*/
 function OnGotMessage(request, sender, sendResponse) {
     if (request.greeting && request.greeting == "token") {
        updateView();
@@ -69,8 +71,7 @@ function init () {
     chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
     chrome.browserAction.onClicked.addListener(AuthAndAskForTaskLists);
     chrome.runtime.onMessage.addListener(OnGotMessage);
-    loader2.requestProcessor.Init();
-    loader2.requestProcessor.Authorize();
+    loader.requestProcessor.Authorize();
 }
 
 window.addEventListener('load', init, false);

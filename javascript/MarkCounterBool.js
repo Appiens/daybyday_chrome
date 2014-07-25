@@ -1,22 +1,27 @@
-/**
- * Created by astafyevala on 21.07.2014.
- */
+/*
+    This module keeps   self.currentNumber and self.isAsked variables
+    It can:
+    Save and restore this variables from cookies
+    Check if currentNumber > MaxNumber -> in this case we should ask for a mark
+*/
 
 function MarkCounterBool(maxNumber) {
-    this.MaxNumber = maxNumber;
+    this.MaxNumber = maxNumber; // the limit for self.currentNumber to increase
 
-    var cookieDomain = "github.com";
-    var cookiePath = "/Appiens/daybyday_chrome";
-    var cookieUrl = "https://"+ cookieDomain + cookiePath + "/trololo"; //"http://developer.chrome.com/extensions/cookies.html";
+    var cookieDomain = "github.com";  // the cookie domain
+    var cookiePath = "/Appiens/daybyday_chrome"; // the cookie path
+    var cookieUrl = "https://"+ cookieDomain + cookiePath + "/trololo"; // the cookie url
 
     var self = this;
-    self.isReadOk = false;
-    self.cookieArray = [];
-    self.currentNumber = 0;
-    self.isAsked = 0;
-    self.counterName = chrome.runtime.id;
-    self.isAskedName = self.counterName + "_asked";
+    self.isReadOk = false; // values was restored from cookies without error
+    self.cookieArray = []; // the cookie array for cookieDomain, cookiePath
+    self.currentNumber = 0; // the current number, that is seeking to maxNumber
+    self.isAsked = 0; // if 1 we have asked for mark already and we don`t need doing it again
+    self.counterName = chrome.runtime.id; // cookie name for currentNamber
+    self.isAskedName = self.counterName + "_asked"; // cookie name for isAsked
 
+    /*Reads currentNumber and isAsked from cookies
+    * callback - the callback function*/
     this.Read = function(callback) {
         self.currentNumber = 0;
         self.isAsked = 0;
@@ -54,6 +59,7 @@ function MarkCounterBool(maxNumber) {
             );
     }
 
+    /* Saves isAsked if isAsked = 1, or currentNumber if isAsked = 0*/
     this.Save = function() {
         if (self.isAsked > 0) {
             writeValueToCookie(self.isAskedName, self.isAsked.toString());
@@ -63,26 +69,35 @@ function MarkCounterBool(maxNumber) {
         }
     }
 
+    /*returns true if cookies was read sucessfully*/
     this.checkReadOk = function() {
         return self.isReadOk;
     }
 
+    /*returns currentNumber value*/
     this.CurrentNumber = function() {
         return self.currentNumber;
     }
 
+    /*Adds value to currentNumber
+    * int value - value to add*/
     this.addToCurr = function(value) {
         self.currentNumber += value;
     }
 
+    /*returns True, if we should ask for a mark*/
     this.checkMaximum = function() {
         return self.currentNumber > this.MaxNumber && self.isAsked == 0;
     }
 
+    /*Sets isAsked = 1. We have asked for a mark*/
     this.stop = function() {
         self.isAsked = 1;
     }
 
+    /*Writes value to cookie
+    * string cookieName - the cookie name,
+    * string cookieValue - the cookie value*/
     var writeValueToCookie = function(cookieName, cookieValue) {
 
         chrome.cookies.set({
@@ -100,6 +115,9 @@ function MarkCounterBool(maxNumber) {
         });
     }
 
+    /* Searches element with name in cookies Array
+    string name - the name to search for
+    */
     var searchEl = function(name) {
         for (var i=0; i < self.cookieArray.length; i++) {
             if (self.cookieArray[i].name == name) {

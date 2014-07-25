@@ -192,7 +192,12 @@ function FillCombo(combo, arrayFrom) {
     }
 }
 
-
+/*
+ returns current time as integer (in ms)
+ */
+function getCurrentTime() {
+    return (new Date()).getTime();
+};
 
 
 
