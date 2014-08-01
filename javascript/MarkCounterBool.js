@@ -5,8 +5,9 @@
     Check if currentNumber > MaxNumber -> in this case we should ask for a mark
 */
 
-function MarkCounterBool(maxNumber) {
+function MarkCounterBool(maxNumber, daysToKeep) {
     this.MaxNumber = maxNumber; // the limit for self.currentNumber to increase
+    this.daysToKeep = daysToKeep; // the nuber of days to keep cookie
 
     var cookieDomain = "github.com";  // the cookie domain
     var cookiePath = "/Appiens/daybyday_chrome"; // the cookie path
@@ -99,11 +100,14 @@ function MarkCounterBool(maxNumber) {
     * string cookieName - the cookie name,
     * string cookieValue - the cookie value*/
     var writeValueToCookie = function(cookieName, cookieValue) {
+        var date = new Date();
+        date.setTime(date.getTime() + (this.daysToKeep * 24 * 60 * 60 * 1000));
 
         chrome.cookies.set({
             "name": cookieName,
             "url": cookieUrl,
-            "value": cookieValue
+            "value": cookieValue,
+            "expires": date.toGMTString()
         }, function (cookie) {
             if (chrome.extension.lastError || chrome.runtime.lastError) {
                 LogMsg(chrome.extension.lastError.message);

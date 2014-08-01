@@ -79,7 +79,6 @@ window.onunload = function() {
           taskInProcess.name = $('input-task-name').value;
           taskInProcess.listName = $('combo-task-list').value;
           taskInProcess.listId = popupData.getTaskIdByName(taskInProcess.listName);
-//          taskInProcess.date =  $('checkbox-with-date').checked ? $('input-task-date').value : null;
           if ($('checkbox-with-date').checked) {
               if (taskInProcess.date == null) {
                   taskInProcess.date = new MyDate();
@@ -207,7 +206,9 @@ function RestoreEventInProcess() {
     popupData.previousTimeFrom.setFromInputValue($('input-event-from-time').value);
 }
 
+  /*Restores reminders in edit boxes from reminderTimeArray, reminderMethodArray*/
 function RestoreReminders(reminderTimeArray, reminderMethodArray) {
+    // hides all reminder divs
     for (var j=0; j< RemindersLib.REMINDER_MAX; j++) {
         $(RemindersLib.getRemindDivName(j + 1)).style.display = 'none';
     }
@@ -222,12 +223,13 @@ function RestoreReminders(reminderTimeArray, reminderMethodArray) {
             var resultIndex = 0;
 
             if (selectedTime > 0) {
+                // we have reminderTimeArray values in minutes, but we want to have it in weeks/hours/days/minutes
                 for (var i = 0; i < backGround.spr.reminderTimesList.items.length; i++) {
                     var k = backGround.spr.reminderTimesList.InMinutes(i);
 
-                    var resultTmp = selectedTime / k;
+                    var resultTmp = selectedTime / k; // we have result in hours/weeks/days
 
-                    if (parseInt(resultTmp) == resultTmp ) {
+                    if (parseInt(resultTmp) == resultTmp ) { // if a value doesn`t have fraction part this value is ok
                         result = resultTmp;
                         resultIndex = i;
                     }
@@ -322,16 +324,15 @@ function AddEventHandlers() {
     chrome.runtime.onMessage.addListener(OnGotMessage);
 }
 
-/*
- Changes popup window state
- int newState = ST_START || ST_CONNECTED || ST_CONNECTING || ST_DISCONNECTED || ST_ERROR || ST_SUCCESS
- */
+/* Changes popup window state
+ int newState = ST_START || ST_CONNECTED || ST_CONNECTING || ST_DISCONNECTED || ST_ERROR || ST_SUCCESS */
 function changeState(newState) {
     popupData.windowStates.SetCurrentState(newState);
     backGround.LogMsg('Popup: Current state is ' + popupData.windowStates.GetCurrentState());
     UpdateCurrentState();
 }
 
+/* updates window controls according to the Popup state */
 function UpdateCurrentState() {
     var currentState = popupData.windowStates.GetCurrentState();
     switch (currentState) {
@@ -384,6 +385,7 @@ function select(selector) {
     return document.querySelector(selector);
 }
 
+// clears and asks buttons-ask-for-mark table
 function clearTableAskForMark() {
     var table = select("#buttons-ask-for-mark");
     while (table.rows.length > 0) {
@@ -393,6 +395,7 @@ function clearTableAskForMark() {
     $('div-ask-for-name').style.display='none';
 }
 
+// fills and shows buttons-ask-for-mark table
 function fillTableAskForMark() {
     $('div-ask-for-name').style.display='';
     var table = select("#buttons-ask-for-mark");
@@ -432,20 +435,30 @@ function fillTableAskForMark() {
     buttonCancel.setAttribute("class", "button-style");
 }
 
+// activates Add Tas tab
 function GotoTaskTab() {
     ActivateTab('tab-add-task', 'tab-sign-in', 'tab-add-event', 'page-add-task', 'page-sign-in', 'page-add-event');
     backGround.popupSettings.lastTab = popupData.windowTabs.TAB_TASK;
 }
 
+// activates Add Event tab
 function GotoEventTab() {
     ActivateTab('tab-add-event', 'tab-sign-in', 'tab-add-task', 'page-add-event', 'page-sign-in', 'page-add-task');
     backGround.popupSettings.lastTab = popupData.windowTabs.TAB_EVENT;
 }
 
+// activates Authorization tab
 function GotoAuthTab() {
     ActivateTab('tab-sign-in', 'tab-add-task', 'tab-add-event', 'page-sign-in', 'page-add-task', 'page-add-event');
 }
 
+// activates tab
+// string activeTabName - tab to activate name
+// string passiveTabName1 - tab 1 to deactivate name
+// string passiveTabName2 - tab 2 to deactivate name
+// string activePageName - div to show name
+ // string passivePageName1 - div 1 to hide name
+ // string passivePageName2 - div 2 to hide name
 function ActivateTab(activeTabName, passiveTabName1, passiveTabName2, activePageName, passivePageName1, passivePageName2) {
     $(passiveTabName1).className = 'Tab';
     $(passiveTabName2).className = 'Tab';
@@ -458,37 +471,34 @@ function ActivateTab(activeTabName, passiveTabName1, passiveTabName2, activePage
 /* set Tabs visibility
  bool authVisibility - show Authorization page if true, hide page otherwise,
  bool addTaskVisibility - show Add task page if true, hide page otherwise
- bool addEventVisibility - show Add event page if true, hide page otherwise
- */
+ bool addEventVisibility - show Add event page if true, hide page otherwise*/
 function setTabsVisibility(authVisibility, addTaskVisibility, addEventVisibility) {
     $('tab-add-task').style.display = addTaskVisibility? '': 'none';
     $('tab-add-event').style.display = addEventVisibility? '': 'none';
     $('tab-sign-in').style.display = authVisibility? '': 'none';
 }
 
-/*
- Showing message to a user with label-user-message
- string message - message to show
- */
+/* Showing message to a user with label-user-message
+ string message - message to show */
 function ShowMessageToUser(message) {
     $('label-user-message').style.display='';
     $('label-user-message').innerHTML = message;
 }
 
+  // Opens the Calendar page
 function OpenCalTab() {
    backGround.trackEvent('Google calendar link', 'clicked');
    OpenTab("https://www.google.com/calendar/render");
 }
 
+  // Opens the Day by Day page
 function OpenDayByDayTab() {
     backGround.trackEvent('Day by day link', 'clicked');
     OpenTab("https://play.google.com/store/apps/details?id=ru.infteh.organizer.trial");
 }
 
-/*
-    Opens url in chrome, if it wasn`t opened, activate if it was opened
-    string url - url to open
-*/
+/*  Opens url in chrome, if it wasn`t opened, activate if it was opened
+    string url - url to open */
 function OpenTab(url) {
     chrome.tabs.query({url: url}, function(tabs) {
         if (tabs == null || tabs[0] == null) {
@@ -500,10 +510,8 @@ function OpenTab(url) {
     });
 }
 
-/*
-    Creates an array with reminder Periods selected in combos
-    returns array[string] of reminderPeriods
-*/
+/*  Creates an array with reminder Periods selected in combos
+    returns array[string] of reminderPeriods */
 function MakeReminderTimeArray() {
     var reminderTimeArray = [];
 
@@ -518,10 +526,8 @@ function MakeReminderTimeArray() {
     return reminderTimeArray;
 }
 
-/*
- Creates an array with reminder Methods selected in combos
- returns array[string] of reminderMethods
-*/
+/* Creates an array with reminder Methods selected in combos
+   returns array[string] of reminderMethods */
 function MakeReminderMethodArray() {
     var reminderMethodArray = [];
 
@@ -535,6 +541,7 @@ function MakeReminderMethodArray() {
     return reminderMethodArray;
 }
 
+/*Close reminder div event handler*/
 function CloseReminderDiv(e) {
     var cnt = 0;
     var targ;
@@ -566,6 +573,7 @@ function CloseReminderDiv(e) {
     }
 }
 
+/*Adds the reminder div with values by default*/
 function AddReminderDiv() {
     var cnt = 0;
 
@@ -677,7 +685,7 @@ function OnGotMessage(request, sender, sendResponse) {
         }
     }
 
-/*Gets calendars from background page, fill combo, select calendar "in process"*/
+/*fills combo with calendars*/
 function FillCalendarComboFromBackground() {
     var combo = $('combo-event-calendar');
     combo.options.length = 0;
@@ -696,6 +704,7 @@ function FillCalendarComboFromBackground() {
     RestoreEventInProcessCombo();
 }
 
+  /*restores combo calendar value from eventInProcess or lastSelectedCalendar*/
 function RestoreEventInProcessCombo() {
     var index = -1;
 
@@ -721,7 +730,7 @@ function RestoreEventInProcessCombo() {
     }
 }
 
-/*Gets task lists from background page, fill combo, select task list "in process"*/
+/*fills combo with task lists*/
 function FillTaskListComboFromBackground() {
 
     var combo = $('combo-task-list');
@@ -737,6 +746,7 @@ function FillTaskListComboFromBackground() {
     RestoreTaskInProcessCombo();
 }
 
+/*restores combo task list from taskInProcess or lastSelectedTaskList*/
 function RestoreTaskInProcessCombo() {
     var index = -1;
     if (backGround.popupSettings.SavedTaskExists()) {
@@ -754,12 +764,13 @@ function RestoreTaskInProcessCombo() {
     }
 }
 
-/*Gets user name from background page, fill label-account-name with it*/
+/*fills label-account-name with it*/
 function GetUserName() {
     backGround.LogMsg('Popup: GotUserName!');
     $('label-account-name').innerHTML = backGround.loader.userName != null ?  backGround.loader.userName : backGround.spr.userMessages.MSG_UNAUTHORIZED;
 }
 
+  /*Add task action*/
 function DoAddTask() {
     if (!AreAllTaskfieldsValid()) {
         return;
@@ -790,18 +801,21 @@ function DoAddTask() {
     backGround.loader.addTask({"name": name, "listId": listId, "date": date, "notes": notes});
 }
 
+  /*Discard task action*/
 function DoClearTask() {
    backGround.popupSettings.ClearSavedTask();
    RestoreTaskInProcess();
    SetButtonAddTaskState();
 }
 
+  /*Discard event action*/
 function DoClearEvent() {
     backGround.popupSettings.ClearSavedEvent();
     RestoreEventInProcess();
     SetButtonAddEventState();
 }
 
+  /*Add event action*/
 function DoAddEvent() {
     if (!AreAllEventFieldsValid()) {
         return;
@@ -845,9 +859,7 @@ function DoAddEvent() {
         "reminderMethodArray": reminderMethodArray});
 }
 
-/*
-    Authorization action
-*/
+/* Authorization action*/
 function DoAuthorize() {
     backGround.LogMsg('Popup: Authorize called');
     changeState(popupData.windowStates.ST_CONNECTING);
@@ -931,9 +943,7 @@ function LocalizePage() {
         chrome.i18n.getMessage('reminder_add_action_title');
 }
 
-/*
-    Enables button button-add-task if task fields are valid
- */
+/* Enables button button-add-task if task fields are valid */
 function SetButtonAddTaskState() {
     if (AreAllTaskfieldsValid())
         enableButton($('button-add-task'));
@@ -941,9 +951,7 @@ function SetButtonAddTaskState() {
         disableButton($('button-add-task'));
 }
 
-/*
-    Enables button button-add-event if event fields are valid
- */
+/* Enables button button-add-event if event fields are valid*/
 function SetButtonAddEventState() {
     if (AreAllEventFieldsValid())
         enableButton($('button-add-event'));
@@ -951,13 +959,11 @@ function SetButtonAddEventState() {
         disableButton($('button-add-event'));
 }
 
-/*
-    DateFrom change event handler
+/*  DateFrom change event handler
     When Date From is changed, date To should change to the same distance
     Example: Date From 16.06.2014 Date To 18.06.2014
     DateFrom Changes to 20.06.2014
-    Date To should be 22.06.2014
-*/
+    Date To should be 22.06.2014 */
 function OnDateFromChanged() {
     if ($('input-event-from').checkValidity()) {
         var days = popupData.previousDateFrom.subDate($('input-event-from').value);
@@ -969,10 +975,8 @@ function OnDateFromChanged() {
     }
 }
 
-/*
-    TimeFrom change event handler
-    When time from is changed time Time To should change to the same distance
-*/
+/*  TimeFrom change event handler
+    When time from is changed time Time To should change to the same distance */
 function OnTimeFromChanged() {
     if ($('input-event-from-time').checkValidity()) {
         var minutes = popupData.previousTimeFrom.subTime($('input-event-from-time').value);
@@ -984,17 +988,13 @@ function OnTimeFromChanged() {
     }
 }
 
-/*
-    Returns true if all task fields are valid, false otherwise
-*/
+/* Returns true if all task fields are valid, false otherwise*/
 function AreAllTaskfieldsValid() {
     var taskDateIsValid = $('input-task-date').checkValidity() || !($('checkbox-with-date').checked);
     return  ($('input-task-name').checkValidity() && $('combo-task-list').checkValidity() && taskDateIsValid && !popupData.addingTaskInProcess);
 }
 
-/*
-    Returns true if all event fields are valid, false otherwise
- */
+/* Returns true if all event fields are valid, false otherwise*/
 function AreAllEventFieldsValid() {
     var remindersOk = true;
 
@@ -1008,18 +1008,14 @@ function AreAllEventFieldsValid() {
         remindersOk && !popupData.addingEventInProcess);
 }
 
-/*
-    Repeat checkbox event handler
-    Shows combo-repetition-interval if checkbox is checked, hides otherwise
- */
+/*  Repeat checkbox event handler
+    Shows combo-repetition-interval if checkbox is checked, hides otherwise*/
 function OnRepeatCheckChanged () {
     $('combo-repetition-interval').style.display = $('checkbox-repetition').checked ? '': 'none';
 }
 
-/*
-    No date checkbox event handler
-    Hides input-task-date if checkbox not checked, shows otherwise
-*/
+/*  No date checkbox event handler
+    Hides input-task-date if checkbox not checked, shows otherwise */
 function OnNoDateCheckChanged() {
     $('input-task-date').style.display = $('checkbox-with-date').checked ? '' : 'none';
     var taskInProcess = backGround.popupSettings.GetSavedTask();
@@ -1028,20 +1024,25 @@ function OnNoDateCheckChanged() {
     SetButtonAddTaskState();
 }
 
+/*Every modification of task fields creates taskInProcess and checks if button should be enabled*/
 function OnTaskFieldChanged(e) {
     backGround.popupSettings.GetSavedTask();
     SetButtonAddTaskState();
 }
 
+/*Every modification of event fields creates eventInProcess and checks if button should be enabled*/
 function OnEventFieldChanged(e) {
     backGround.popupSettings.GetSavedEvent();
     SetButtonAddEventState();
 }
 
+/* Sets calendar`s color*/
 function OnCalendarChangedCallback() {
     OnCalendarChanged(false);
 }
 
+  /* Sets color of selected in combo calendar
+  * bool restoreRemiders - if true we should restore default reminders for selected calendar, otherwise - do nothing*/
 function OnCalendarChanged(restoreReminders) {
     var combo = $('combo-event-calendar');
     for (var i=0; i < combo.options.length; i++) {
@@ -1061,15 +1062,14 @@ function OnCalendarChanged(restoreReminders) {
     }
 }
 
-/*
-    All Day checkbox event handler
-    Hides time inputs if checked, shows otherwise
- */
+/*  All Day checkbox event handler
+    Hides time inputs if checked, shows otherwise */
 function OnAllDayCheckChanged() {
     $('input-event-from-time').style.display = $('checkbox-all-day').checked ? 'none': '';
     $('input-event-to-time').style.display = $('checkbox-all-day').checked ? 'none': '';
 }
 
+  /*Pressing Enter on every field (but not Comment) should call DoAddTask*/
 function onKeypressTask(event) {
     var keyCode = event.keyCode;
 
@@ -1078,6 +1078,7 @@ function onKeypressTask(event) {
     }
 }
 
+  /*Pressing Enter on every field (but not Description) should call DoAddEvent*/
 function onKeypressEvent(event) {
     var keyCode = event.keyCode;
 
@@ -1086,6 +1087,7 @@ function onKeypressEvent(event) {
     }
 }
 
+  // Exeption should be saved n Google Analytics
 window.onerror = function(message, file, line) {
     backGround._gaq.push(['_trackEvent', "Global", "Exception", file + "(" + line + "): " + message])
 };
