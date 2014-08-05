@@ -7,7 +7,7 @@
 
 function MarkCounterBool(maxNumber, daysToKeep) {
     this.MaxNumber = maxNumber; // the limit for self.currentNumber to increase
-    this.daysToKeep = daysToKeep; // the nuber of days to keep cookie
+
 
     var cookieDomain = "github.com";  // the cookie domain
     var cookiePath = "/Appiens/daybyday_chrome"; // the cookie path
@@ -20,6 +20,7 @@ function MarkCounterBool(maxNumber, daysToKeep) {
     self.isAsked = 0; // if 1 we have asked for mark already and we don`t need doing it again
     self.counterName = chrome.runtime.id; // cookie name for currentNamber
     self.isAskedName = self.counterName + "_asked"; // cookie name for isAsked
+    self.daysToKeep = daysToKeep; // the number of days to keep cookie
 
     /*Reads currentNumber and isAsked from cookies
     * callback - the callback function*/
@@ -96,18 +97,23 @@ function MarkCounterBool(maxNumber, daysToKeep) {
         self.isAsked = 1;
     }
 
+    this.resetCounter = function() {
+        self.currentNumber = 0;
+        self.isAsked = 0;
+    }
+
     /*Writes value to cookie
     * string cookieName - the cookie name,
     * string cookieValue - the cookie value*/
     var writeValueToCookie = function(cookieName, cookieValue) {
         var date = new Date();
-        date.setTime(date.getTime() + (this.daysToKeep * 24 * 60 * 60 * 1000));
+        var expiresSec = Math.ceil(date.getTime()/1000 + (self.daysToKeep * 24 * 60 * 60));
 
         chrome.cookies.set({
             "name": cookieName,
             "url": cookieUrl,
             "value": cookieValue,
-            "expires": date.toGMTString()
+            "expirationDate": expiresSec
         }, function (cookie) {
             if (chrome.extension.lastError || chrome.runtime.lastError) {
                 LogMsg(chrome.extension.lastError.message);

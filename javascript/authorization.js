@@ -360,7 +360,7 @@ function Loader() {
 
                 if (obj.items) {
                     parent.taskLists = obj.items;
-                    LogMsg(JSON.stringify(obj.items));
+                  //  LogMsg(JSON.stringify(obj.items));
                 }
                 else {
                     isOk = false;
@@ -397,7 +397,7 @@ function Loader() {
 
                 if (obj.items) {
                     parent.calendarLists = obj.items;
-                    LogMsg(JSON.stringify(obj.items));
+                 //   LogMsg(JSON.stringify(obj.items));
                 }
                 else {
                     isOk = false;

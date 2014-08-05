@@ -403,8 +403,8 @@ function fillTableAskForMark() {
     var buttonOk = document.createElement("button");
     buttonOk.innerText = backGround.spr.userMessages.MSG_MARKOK;
     buttonOk.onclick = function(){
-            backGround.LogMsg('Ok pressed');
-            backGround.trackEvent('Add mark ok', 'clicked');
+            backGround.LogMsg(backGround.spr.userMessages.MSG_MARKOK + ' pressed');
+            backGround.trackEvent('Add mark ' + backGround.spr.userMessages.MSG_MARKOK, 'clicked');
             backGround.markCounter.stop();
             OpenTab("https://chrome.google.com/webstore/detail/day-by-day/loopacbjaigjkjdhjfkhebdhfgdmgjdc/reviews");
             setTimeout(function() { window.close(); }, 1500);
@@ -413,9 +413,9 @@ function fillTableAskForMark() {
     var buttonCancel = document.createElement("button");
     buttonCancel.innerText = backGround.spr.userMessages.MSG_MARKCANCEL;
     buttonCancel.onclick = function(){
-            backGround.LogMsg('Cancel pressed');
-            backGround.trackEvent('Add mark cancel', 'clicked');
-            backGround.markCounter.stop();
+            backGround.LogMsg(backGround.spr.userMessages.MSG_MARKCANCEL + ' pressed');
+            backGround.trackEvent('Add mark ' + backGround.spr.userMessages.MSG_MARKCANCEL, 'clicked');
+            backGround.markCounter.resetCounter();
             clearTableAskForMark();
             changeState(popupData.windowStates.ST_CONNECTED);
     };
