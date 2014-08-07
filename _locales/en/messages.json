@@ -39,7 +39,7 @@
     "event_place_title": {"message": "Location"},
     "event_calendar_title": {"message": "Calendar"},
     "repetition_interval_everyweek": {"message": "Weekly"},
-    "repetition_interval_everyday": {"message": "Dialy"},
+    "repetition_interval_everyday": {"message": "Daily"},
     "repetition_interval_everymonth": {"message": "Monthly"},
     "repetition_interval_everyyear": {"message": "Yearly"},
     "reminder_type": {"message": "Pop-up"},
