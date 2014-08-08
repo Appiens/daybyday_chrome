@@ -6,7 +6,7 @@
 var loader = new Loader();
 
 // keeps the number of successfully added tasks and events to ask for mark
-var markCounter = new MarkCounterBool(15, 365);
+var markCounter = new MarkCounterBool(3, 365);
 
 // dictionaries module
 var spr = new Spr();
