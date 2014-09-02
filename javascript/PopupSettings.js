@@ -3,13 +3,13 @@
  */
 
 // saving settings of popup win after it closes
-function PopupSettings(lastState, lastTab) {
+function PopupSettings() {
 
     // keeps popup window state after it closes
-    this.lastState = lastState;
+    this.lastState = -1;
 
     // keeps popup last selected tab after it closes
-    this.lastTab = lastTab;
+    this.lastTab = -1;
 
     // keeps last selected calendar
     this.lastSelectedCalendar = null;
@@ -69,7 +69,7 @@ function PopupSettings(lastState, lastTab) {
     // creates and returns it otherwise
     this.GetSavedTask = function() {
         if (taskInProcess == null) {
-            taskInProcess = new Task('', null, null, '', null, null);
+            taskInProcess = new Task({});
         }
 
         return taskInProcess;
@@ -79,7 +79,7 @@ function PopupSettings(lastState, lastTab) {
     // creates and returns it otherwise
     this.GetSavedEvent = function() {
         if (eventInProcess == null) {
-            eventInProcess = new EventCal('', null, null, null, null, null, null, '', false, '', null, [], []);
+            eventInProcess = new EventCal({});
         }
 
         return eventInProcess;

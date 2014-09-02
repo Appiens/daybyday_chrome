@@ -5,44 +5,53 @@
 //adding listener when body is loaded to call init function.
 window.addEventListener('load', init, false);
 
+// the backGround page
 var backGround;
 
-var currTokenOk = false;
-
-/**
- * Sets the value of multiple calendar checkbox based on value from
- * local storage, and sets up the `save` event handler.
- */
+/*Initializes the page*/
 function init() {
     backGround = chrome.extension.getBackgroundPage();
-    $('optionsTitle').innerHTML = chrome.i18n.getMessage('optionsTitle');
+    LocalizePage();
+    AddEventHandlers();
+    updateView();
+};
 
+/*Revokes rigths to get token from app*/
+function revokeIt() {
+    backGround.loader.requestProcessor.Revoke(updateView);
+};
+
+/* On Got Message event handler
+ When connection appears/disappears we should update view
+ */
+function OnGotMessage(request, sender, sendResponse) {
+    if (request.greeting && request.greeting == "token") {
+        updateView();
+    }
+}
+
+/*Updates the Revoke button state*/
+function updateView() {
+    if (backGround.loader.IsRevoked() || !backGround.loader.TokenNotNull()) {
+        disableButton($('buttonRevoke'));
+    }
+    else {
+        enableButton($('buttonRevoke'));
+    }
+}
+
+/*localize page to current language*/
+function LocalizePage() {
+    $('optionsTitle').innerHTML = chrome.i18n.getMessage('optionsTitle');
     $('buttonRevoke').value = chrome.i18n.getMessage('revoke_action_title');
     $('buttonRevokeText').innerHTML= chrome.i18n.getMessage('revoke_rights_action_title');
     $('extensionName').innerHTML = chrome.i18n.getMessage('name');
+}
+
+/*adds event handlers */
+function AddEventHandlers() {
     document.querySelector('#buttonRevoke').addEventListener('click', revokeIt);
-
-    window.setInterval(updateView, 3000);
-};
-
-function revokeIt() {
-    backGround.oauthMine.revokeAuth();
-};
-
-function updateView() {
-    var tokenOk = backGround.oauthMine.isTokenOk();
-
-    if (tokenOk && !currTokenOk) {
-        enableButton($('buttonRevoke'));
-        currTokenOk = true;
-    }
-    else {
-        if (!tokenOk && currTokenOk) {
-            disableButton($('buttonRevoke'));
-            currTokenOk = false;
-        }
-    }
-
+    chrome.runtime.onMessage.addListener(OnGotMessage);
 }
 
 

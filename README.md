@@ -29,5 +29,3 @@ To read more details, visit our website http://appiens.com
 Для быстрого добавления задач/мероприятий на вашем Android-смартфоне/планшете, используйте приложение "День за Днём Органайзер" https://play.google.com/store/apps/details?id=ru.infteh.organizer.trial
 
 Более подробную информацию вы можете найти на нашем сайте http://appiens.com
-
-

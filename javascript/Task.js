@@ -2,11 +2,14 @@
  * Created by AstafyevaLA on 29.04.2014.
  */
 
-function Task(name, listId, date, notes, listName, notesRows) {
-    this.name = name;
-    this.listId = listId;
-    this.listName = listName;
-    this.date = date;
-    this.notes = notes;
-    this.notesRows = notesRows;
+// keeps modifying event between popup launches
+function Task(task) {
+             /*name, listId, date, notes, listName, notesRows*/
+       // /*    '',  null,   null, '',    null,     null*/
+    this.name = task.name || '';
+    this.listId = task.listId || null;
+    this.listName = task.listName || null;
+    this.date = task.date || null;
+    this.notes = task.notes || '';
+    this.notesRows = task.notesRows || null;
 }

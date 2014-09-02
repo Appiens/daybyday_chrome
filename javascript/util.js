@@ -2,7 +2,6 @@
  * Created by AstafyevaLA on 29.04.2014.
  */
 
-
 ST_REQUEST_OK = 200;
 TEXT_VALUE_SPLITTER = '$';
 
@@ -28,33 +27,7 @@ function CurrDateStr(theDay) {
     return theDay;
 };
 
-/*
-   date theDay
-   offset - offset in hours 0-23
-   returns the Date one hour later than theDay
-*/
-function CurrDateStrOffset(theDay) {
-    if (theDay.getHours() < 23) {
-        return CurrDateStr(theDay);
-    }
-    else {
-        return CurrDateStr(addDays(theDay, 1));
-    }
-}
 
-/*
- date theDay
- offset - offset in hours 0-23
- returns the Time one hour later than theTime
- */
-function CurrTimeStrOffset(theTime) {
-    if (theTime.getHours() == 23) {
-        return "00:00:00";
-    }
-    else {
-        return AddZero(theTime.getHours() + 1) + ":00:00";
-    }
-}
 
 /*
  date theTime,
@@ -143,16 +116,6 @@ function filterSpecialChar(data) {
     return data;
 }
 
-/*
-    prints char codes of all symbols in string
-    string data - string to print
- */
-/*function printCharCodes(data) {
-    console.log("Printing char codes of " + data);
-    for (var i = 0; i < data.length; i++) {
-        console.log(data.charCodeAt(i));
-    }
-}*/
 
 /* make button disabled
   Button (getElementById) button*/
@@ -172,26 +135,6 @@ function IsButtonDisabled(button) {
     return button.hasAttribute('disabled');
 }
 
-/*
-    returns timezone offset as string
-    +04:00 for example
-*/
-function GetTimeZoneOffsetStr() {
-    var d = new Date();
-    var offset = d.getTimezoneOffset();
-    var durationInMinutes = AddZero(parseInt(Math.abs(offset/60))) + ":" + AddZero(Math.abs(offset%60), 2);
-    var sign = offset > 0?"-":"+";
-    return sign + durationInMinutes;
-}
-
-/*
-    Returns date part from string 2014-06-16T10:00:00
-    string date
-*/
-
-function GetDateOnly(date) {
-    return date.substr(0, date.indexOf('T'));
-}
 
 /*
     Returns right part of string left_part$right_part, $ - TEXT_VALUE_SPLITTER
@@ -250,61 +193,13 @@ function FillCombo(combo, arrayFrom) {
 }
 
 /*
- Adds days to a date
- string date YYYY-MM-DD HH:MM:SS,
- int days
- returns date as date
+ returns current time as integer (in ms)
  */
-function addDays(date, days) {
-    var d2 = new Date(date);
-    d2.setDate(d2.getDate() + days);
-    return d2;
-}
-
-/*
- Adds minutes to a date
- string date YYYY-MM-DD HH:MM:SS,
- int hours
- returns date as date
- */
-function addHours(date, hours){
-    var d2 = new Date(date);
-    d2.setHours(d2.getHours() + hours);
-    return d2;
-}
-
-/*
-    Adds minutes to a date
-    string date YYYY-MM-DD HH:MM:SS,
-    int minutes
-    returns date as date
- */
-function addMinutes(date, minutes) {
-    var d2 = new Date(date);
-    d2.setMinutes(d2.getMinutes() + minutes);
-    return d2;
-}
-
-/*
-    returns difference between first and second date in days
-    string first YYYY-MM-DD,
-    string second YYYY-MM-DD
-*/
-function daydiff(first, second) {
-    return (new Date(second)- new Date(first))/(1000*60*60*24);
-}
+function getCurrentTime() {
+    return (new Date()).getTime();
+};
 
 
-/*
-    returns difference between first and second times in minutes
-    string first as HH:MM
-    string second as HH:MM
-*/
-function timeDiff(first, second) {
-    var firstDate = new Date(2014, 6, 10, parseInt(first.split(':')[0]), parseInt(first.split(':')[1]));
-    var secondDate = new Date(2014, 6, 10, parseInt(second.split(':')[0]), parseInt(second.split(':')[1]));
-    return (secondDate.getHours() - firstDate.getHours())*60 + (secondDate.getMinutes() - firstDate.getMinutes());
-}
 
 
 
