@@ -9,7 +9,7 @@ function MarkCounterBool(maxNumber, daysToKeep) {
     this.MaxNumber = maxNumber; // the limit for self.currentNumber to increase
 
 
-    var cookieDomain = "github.com";  // the cookie domain
+    var cookieDomain = "";//"appiens.com";  // the cookie domain
     var cookiePath = "/Appiens/daybyday_chrome"; // the cookie path
     var cookieUrl = "https://"+ cookieDomain + cookiePath + "/trololo"; // the cookie url
 
@@ -29,7 +29,44 @@ function MarkCounterBool(maxNumber, daysToKeep) {
         self.isAsked = 0;
         self.isReadOk = false;
 
-        chrome.cookies.getAll({
+        chrome.storage.local.get([self.counterName, self.isAskedName] , function (result) {
+            if (chrome.extension.lastError || chrome.runtime.lastError) {
+                LogMsg("chrome.storage.local.get error:" + chrome.extension.lastError.message);
+                LogMsg("chrome.storage.local.get error:" + chrome.runtime.lastError.message);
+                return;
+            }
+
+            LogMsg(JSON.stringify(result));
+
+            var flOk = true;
+
+            if (result[self.counterName]) {
+                LogMsg("!!!" + result[self.counterName]);
+                self.currentNumber = parseInt(result[self.counterName]);
+            }
+            else {
+                flOk = false;
+            }
+
+            if (result[self.isAskedName]) {
+                LogMsg("!!!" + result[self.isAskedName]);
+                self.isAsked = parseInt(result[self.isAskedName]);
+            }
+            else {
+                flOk = false;
+            }
+
+            self.isReadOk = flOk;
+
+            callback();
+        });
+
+
+      /*  chrome.storage.local.get(self.counterName, function (result) {
+            LogMsg(result);
+        });*/
+
+     /*   chrome.cookies.getAll({
             "domain": cookieDomain,
             "path": cookiePath
         }, function (cookies) {
@@ -58,16 +95,19 @@ function MarkCounterBool(maxNumber, daysToKeep) {
                 }
             }
 
-            );
+            );*/
     }
 
     /* Saves isAsked if isAsked = 1, or currentNumber if isAsked = 0*/
     this.Save = function() {
         if (self.isAsked > 0) {
-            writeValueToCookie(self.isAskedName, self.isAsked.toString());
+           // writeValueToCookie(self.isAskedName, self.isAsked.toString());
+            writeValueToLocalStorage(self.isAskedName, self.isAsked.toString());
         }
         else {
-            writeValueToCookie(self.counterName, self.currentNumber.toString());
+          //  writeValueToCookie(self.counterName, self.currentNumber.toString());
+            writeValueToLocalStorage(self.counterName, self.currentNumber.toString());
+            writeValueToLocalStorage(self.isAskedName, self.isAsked.toString());
         }
     }
 
@@ -109,6 +149,8 @@ function MarkCounterBool(maxNumber, daysToKeep) {
         var date = new Date();
         var expiresSec = Math.ceil(date.getTime()/1000 + (self.daysToKeep * 24 * 60 * 60));
 
+        LogMsg(cookieName + "=" + cookieValue);
+
         chrome.cookies.set({
             "name": cookieName,
             "url": cookieUrl,
@@ -122,6 +164,19 @@ function MarkCounterBool(maxNumber, daysToKeep) {
             }
 
             LogMsg(JSON.stringify(cookie));
+        });
+    }
+
+    var writeValueToLocalStorage = function(name, value) {
+        var item = {};
+        item [name] = value;
+        chrome.storage.local.set(item, function() {
+            // Notify that we saved.
+            if (chrome.extension.lastError || chrome.runtime.lastError) {
+                LogMsg("chrome.storage.local.set error:" + chrome.extension.lastError.message);
+                LogMsg("chrome.storage.local.set error:" + chrome.runtime.lastError.message);
+                return;
+            }
         });
     }
 
