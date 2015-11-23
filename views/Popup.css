@@ -4,7 +4,7 @@
 */
 
 /* Общие элементы, обычное состояние */
-:invalid {
+input:invalid {
     border: 1px solid #FF4444;
 }
 
