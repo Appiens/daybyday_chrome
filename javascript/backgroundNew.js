@@ -17,6 +17,8 @@ var popupSettings = new PopupSettings();
 // google analytics (for logging)
 var _gaq;
 
+var connectionOk = false;
+
 /* updating icon and popup page */
 function updateView() {
     var isTokenOk = loader.TokenNotNull();
@@ -33,9 +35,26 @@ function updateView() {
     }
 };
 
+function updateViewNoLoad()
+{
+    var isTokenOk = loader.TokenNotNull();
+
+    if (isTokenOk) {
+        chrome.browserAction.setIcon({ 'path' : '../images/daybyday16.png'});
+        chrome.browserAction.setPopup({popup : "views/Popup.html"});
+    }
+    else {
+        chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
+        chrome.browserAction.setPopup({popup : ""});
+    }
+
+    connectionOk = isTokenOk;
+}
+
 /* Ask for taskLists, calendarLists, userName with select Google account*/
 function AuthAndAskForTaskLists() {
     loader.Load(true);
+    updateViewNoLoad();
 }
 
 /* Logs msg to console with current date and time*/
@@ -68,10 +87,12 @@ function init () {
     })();
 
     updateView();
-    chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
+    // chrome.browserAction.setIcon({ 'path' : '../images/daybyday16gray.png'});
     chrome.browserAction.onClicked.addListener(AuthAndAskForTaskLists);
     chrome.runtime.onMessage.addListener(OnGotMessage);
+    loader.requestProcessor.onChangeConnectionState = updateView;
     loader.requestProcessor.Authorize();
+
 }
 
 window.addEventListener('load', init, false);

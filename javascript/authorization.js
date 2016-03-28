@@ -7,6 +7,7 @@ function RequestProcessor() {
     self.tokenExpiresIn = 0;    // the timespan during which token is actual
     self.tokenGetTime = 0;      // the time we got token
     self.isRevoked = false;     // sets to true when user revokes rights from this app
+    self.onChangeConnectionState = null;
     var currTokenOk = false;    // the current state of token (we are going to compare old and ne states)
 
     /*Adds request to request queue
@@ -172,7 +173,10 @@ function RequestProcessor() {
         var isTokenOk = self.token != null;
 
         if (currTokenOk != isTokenOk) {
-            chrome.runtime.sendMessage({greeting: "token", state: isTokenOk});
+            if (self.onChangeConnectionState != null)
+            {
+                self.onChangeConnectionState();
+            }
         }
 
         currTokenOk = isTokenOk;
